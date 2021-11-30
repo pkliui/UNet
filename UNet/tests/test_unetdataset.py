@@ -5,8 +5,12 @@ import shutil, tempfile
 
 from matplotlib import pyplot as plt
 
-from UNet.classes.unetdataset import UNetDataset
+from UNet.data_handling.unetdataset import UNetDataset
 from UNet.classes.preprocess import Resize, SplitDataLoader
+from UNet.data_handling.base import BaseDataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
+
+from torch.utils.data.dataset import Dataset
 
 import numpy as np
 from torchvision import transforms
@@ -22,88 +26,160 @@ class TestUNetDateset(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    def setUp(self):
-        # create an instance of UNetDataset class
-        self.und = UNetDataset()
-        # create a temporary directory
-        self.test_dir = tempfile.mkdtemp()
+    # def setUp(self):
+    #     # create an instance of UNetDataset class
+    #     self.und = UNetDataset()
+    #     # create a temporary directory
+    #     self.test_dir = tempfile.mkdtemp()
+    #
+    # def tearDown(self):
+    #     # remove temporary directory after the test
+    #     shutil.rmtree(self.test_dir)
+    #
+    # def test_arguments(self):
+    #     """
+    #     test input arguments are existing and are either None or equal to expected default values
+    #    """
+    #     for var in ["transform"]:
+    #         self.assertIn(var, self.und.__dict__)
+    #         self.assertEqual(self.und.__dict__[var], None)
 
-    def tearDown(self):
-        # remove temporary directory after the test
-        shutil.rmtree(self.test_dir)
-
-    def test_arguments(self):
+    def test_making_dataset_train(self):
         """
-        test input arguments are existing and are either None or equal to expected default values
-        """
-        for var in ["root_dir", "images_folder", "masks_folder", "transform"]:
-            self.assertIn(var, self.und.__dict__)
-            self.assertEqual(self.und.__dict__[var], None)
-
-    def test_making_dataset_1(self):
-        """
-        test making a dataset by reading images and masks from a directory and transforming them
-        expects RGB images and RGB masks
-        directory structure 1
+        test creating a dataloader for training data
         """
         # specify the roo dir, images' and masks' folders and the image size
-        root_dir = "/UNet/data/test_reading_files/"
+        extension = "*.bmp"
+        #extension = "*.jpeg"
+        root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/"
+        #root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/test_reading_files/"
+        images_folder = "images"
+        masks_folder = "masks"
+        im_size = 10
+        batch_size = 2
+        #
+        # specify an image transform function
+        transform = transforms.Compose([Resize((im_size,im_size), (im_size,im_size))])
+        #
+        # read masks and images
+        unet_data = UNetDataset(root_dir, images_folder, masks_folder, extension, transform=transform)
+        # make a dataloader from the dataset
+        data_loader = BaseDataLoader(dataset=unet_data,
+        batch_size=batch_size,
+        validation_split=0,
+        shuffle_for_split=True,
+        random_seed_split=0)
+
+        # check the batch size
+        for ii in range(len(data_loader.train_loader.dataset)):
+            image, mask = next(iter(data_loader.train_loader))
+            #plt.imshow(image[0].squeeze(), cmap="gray")
+            #plt.show()
+            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
+
+    def test_making_dataset_train_val_50_50(self):
+        """
+        test creating a 50-50 dataloader for training and validation data
+        """
+        # specify the root dir, images' and masks' folders and the image size
+        extension = "*.bmp"
+        #extension = "*.jpeg"
+        root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/"
         images_folder = "images"
         masks_folder = "masks"
         im_size = 100
+        batch_size = 2
+        validation_split = 0.5
+        shuffle_for_split = True
+        random_seed_split = 0
         #
         # specify an image transform function
-        transform = transforms.Compose([
-            Resize((im_size,im_size),
-                   (im_size,im_size))
-        ])
+        transform = transforms.Compose([Resize((im_size,im_size), (im_size,im_size))])
         #
-        # read masks and images into a dataset
-        unet_data = UNetDataset(root_dir=root_dir, images_folder=images_folder,
-                                masks_folder=masks_folder, transform=transform, files_structure=1)
-        #
-        # I expect to see a list of dictionaries,
-        # where each dictionary has an "image" and a "mask" keys and he corresponding arrays as values
-        # I don't check here if the pixel values were correctly read, just the overall output structure
-        #
-        # check there are 8 entries in the list (8 different dictionaries with masks and images)
-        #print(list(unet_data))
-        #print("list length: ", len(list(unet_data)))
-        self.assertEqual(len(list(unet_data)), 8)
-        # and each dictionary contains 2 entries
-        #print([len(ii) for ii in list(unet_data)])
-        self.assertEqual([len(ii) for ii in list(unet_data)], [2]*8)
+        # read masks and images
+        unet_data = UNetDataset(root_dir, images_folder, masks_folder, extension, transform=transform)
+        # make a dataloader from the dataset
+        data_loader = BaseDataLoader(dataset=unet_data,
+                                     batch_size=batch_size,
+                                     validation_split=validation_split,
+                                     shuffle_for_split=shuffle_for_split,
+                                     random_seed_split=random_seed_split)
 
+        # check the batch size of the train data
+        for ii in range(len(data_loader.train_loader.dataset)):
+            image, mask = next(iter(data_loader.train_loader))
+            #plt.imshow(image[0].squeeze(), cmap="gray")
+            #plt.show()
+            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
 
-    def test_making_dataset_2(self):
+        # check the batch size of the validation data
+        for ii in range(len(data_loader.val_loader.dataset)):
+            image, mask = next(iter(data_loader.val_loader))
+            #plt.imshow(image[0].squeeze(), cmap="gray")
+            #plt.show()
+            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
+
+    def test_making_dataset_train_val_90_10(self):
         """
-        test making a dataset by reading images and masks from a directory and transforming them
-        expect RGB images and RGB masks
-        directory structure 2
+        test creating a 90-10 dataloader for training and validation data
         """
-        images_folder = "Dermoscopic_Image"
-        masks_folder = "lesion"
-        root_dir = "/UNet/data/PH2_Dataset_images/"
+        # specify the root dir, images' and masks' folders and the image size
+        extension = "*.bmp"
+        #extension = "*.jpeg"
+        root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/"
+        images_folder = "images"
+        masks_folder = "masks"
         im_size = 100
+        batch_size = 2
+        validation_split = 0.1
+        shuffle_for_split = True
+        random_seed_split = 0
         #
-        transform = transforms.Compose([
-            Resize((im_size,im_size),
-                   (im_size,im_size))
-        ])
+        # specify an image transform function
+        transform = transforms.Compose([Resize((im_size,im_size), (im_size,im_size))])
         #
-        # note here the file_structure is 2!
-        unet_data = UNetDataset(root_dir=root_dir, images_folder=images_folder,
-                                masks_folder=masks_folder, transform=transform, files_structure=2)
+        # read masks and images
+        unet_data = UNetDataset(root_dir, images_folder, masks_folder, extension, transform=transform)
         #
+        # make a dataloader from the dataset
+        # assert there is a value error as the batch size is larger than the validation set size
+        with self.assertRaises(ValueError):
+            _ = BaseDataLoader(dataset=unet_data,
+                                         batch_size=batch_size,
+                                         validation_split=validation_split,
+                                         shuffle_for_split=shuffle_for_split,
+                                         random_seed_split=random_seed_split)
+
+    def test_making_dataset_train_val_10_90(self):
+        """
+        test creating a 10-90 dataloader for training and validation data
+        """
+        # specify the root dir, images' and masks' folders and the image size
+        extension = "*.bmp"
+        #extension = "*.jpeg"
+        root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/"
+        images_folder = "images"
+        masks_folder = "masks"
+        im_size = 100
+        batch_size = 2
+        validation_split = 0.9
+        shuffle_for_split = True
+        random_seed_split = 0
         #
-        # I expect to see a list of dictionaries,
-        # where each dictionary has an "image" and a "mask" keys and he corresponding arrays as values
-        # I don't check here if the pixel values were correctly read, just the overall output structure
+        # specify an image transform function
+        transform = transforms.Compose([Resize((im_size,im_size), (im_size,im_size))])
         #
-        # check there are 10 entries in the list (10 different dictionaries with masks and images)
-        #print(list(unet_data))
-        #print("list length: ", len(list(unet_data)))
-        self.assertEqual(len(list(unet_data)), 10)
-        # and each dictionary contains 2 entries
-        #print([len(ii) for ii in list(unet_data)])
-        self.assertEqual([len(ii) for ii in list(unet_data)], [2]*10)
+        # read masks and images
+        unet_data = UNetDataset(root_dir, images_folder, masks_folder, extension, transform=transform)
+        #
+        # make a dataloader from the dataset
+        # assert there is a value error as the batch size is larger than the train set size
+        with self.assertRaises(ValueError):
+            _ = BaseDataLoader(dataset=unet_data,
+                               batch_size=batch_size,
+                               validation_split=validation_split,
+                               shuffle_for_split=shuffle_for_split,
+                               random_seed_split=random_seed_split)

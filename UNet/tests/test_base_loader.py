@@ -1,8 +1,5 @@
 import unittest
 from ddt import ddt
-import numpy as np
-import torch
-
 import shutil, tempfile
 
 
@@ -40,7 +37,6 @@ class TestBaseDataLoader(unittest.TestCase):
                  validation_split=0,
                  shuffle_for_split=True,
                  random_seed_split=0)
-
         vals = [["somedummydata", "somedummydata"], 1, 0]
         print(self.bdl.__dict__)
         for idx, var in enumerate(["dataset", "batch_size", "validation_split"]):
@@ -49,11 +45,14 @@ class TestBaseDataLoader(unittest.TestCase):
 
     def test_read_data(self):
         """
-        test missing positional arguments
-        test to read some non-existing data
+        test reading some non-existing data
         """
-        with self.assertRaises(TypeError):
-            self.bdl.read_data()
-        with self.assertRaises(ValueError):
-            self.bdl.read_data(datapath="some_nonsense_path", images_folder="nonsense_images", masks_folder="nonsense_masks")
-
+        # instantiate class
+        self.bdl = BaseDataLoader(dataset=["somedummydata", "somedummydata"],
+                                  batch_size=1,
+                                  validation_split=0,
+                                  shuffle_for_split=True,
+                                  random_seed_split=0)
+        self.assertEqual(self.bdl.dataset, ["somedummydata", "somedummydata"])
+        self.assertEqual(self.bdl.batch_size, 1)
+        self.assertEqual(self.bdl.validation_split, 0)

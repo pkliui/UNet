@@ -37,11 +37,11 @@ class AugmentImageAndMask(torch.utils.data.Dataset):
         y = self.tensors[1][index]
         #
         # assert both images are rectangular
-        assert x.shape[-1] == x.shape[
-            -2], "Dimensions of input images are assumed to be equal. Shape of a current input image is ({},{})".format(
+        assert x.shape[-1] == x.shape[-2], \
+            "Dimensions of input images are assumed to be equal. Shape of a current input image is ({},{})".format(
             x.shape[-2], x.shape[-1])
-        assert y.shape[-1] == y.shape[
-            -2], "Dimensions of input masks are assumed to be equal. Shape of a current input mask is ({},{})".format(
+        assert y.shape[-1] == y.shape[-2], \
+            "Dimensions of input masks are assumed to be equal. Shape of a current input mask is ({},{})".format(
             y.shape[-2], y.shape[-1])
         #
         # zero-pad mask images to the shape of input images:

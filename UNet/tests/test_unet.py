@@ -43,7 +43,7 @@ class TestUNet(unittest.TestCase):
         """
         num_batches = 2
         x = torch.randn(num_batches, 3, 572, 572, dtype=torch.float32)
-        d0 = self.unet(x)
+        _ = self.unet(x)
 
         self.assertEqual((self.unet.e0_fm.shape[1], self.unet.e0_fm.shape[2], self.unet.e0_fm.shape[3]), (64, 568, 568))
         self.assertEqual((self.unet.e0_pool_fm.shape[1], self.unet.e0_pool_fm.shape[2], self.unet.e0_pool_fm.shape[3]), (64, 284, 284))

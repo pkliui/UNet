@@ -46,10 +46,9 @@ class BaseDataset(Dataset):
         """
         return NotImplementedError("Transform not implemented")
 
-
 class BaseDataLoader:
     def __init__(self, dataset=None,
-                 batch_size=16,
+                 batch_size=1,
                  validation_split=0,
                  shuffle_for_split=True,
                  random_seed_split=0):
@@ -69,18 +68,20 @@ class BaseDataLoader:
 
         # case no validation set
         if self.validation_split == 0:
+            print("validation split = 0", self.validation_split)
             self.train_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
-        # case validation set only (testset)
-        if self.validation_split == 1:
+        # case validation set only (test set)
+        elif self.validation_split == 1:
+            print("validation split = 1", self.validation_split)
             self.val_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
         # case training/validation set split
         else:
+            print("validation split = ", self.validation_split)
             indices = np.arange(len(dataset))
-
             # generate random indicies for split
             if shuffle_for_split:
                 np.random.seed(random_seed_split)
@@ -88,6 +89,16 @@ class BaseDataLoader:
             #
             # setup random samplers for data loaders
             split = int(np.floor(validation_split * len(dataset)))
+
+            print("int(len(dataset) - split)", int(len(dataset) - split))
+            print("split", split)
+            if validation_split >= 0.5 and (len(dataset) - split >= self.batch_size):
+                pass
+            elif validation_split < 0.5 and (split >= self.batch_size):
+                pass
+            else:
+                raise ValueError("Decrease the batch size or change the validation split")
+
             train_sampler = SubsetRandomSampler(indices[split:])
             val_sampler = SubsetRandomSampler(indices[:split])
             #

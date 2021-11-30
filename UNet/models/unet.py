@@ -185,8 +185,6 @@ class UNetConvBlock(nn.Module):
             Number of channels in the output image
         kernel_size:
             Size of he convolving kernel
-        activation:
-            Activation function to be used after the convolution and batch normalization
         """
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size)
