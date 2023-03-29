@@ -3,7 +3,8 @@ import torch
 from UNet.utils.augment import AugmentImageAndMask, get_augmented_tensors, random_transforms
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from IPython.display import clear_output
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, rcParams
+
 
 def train(model,
           opt,
