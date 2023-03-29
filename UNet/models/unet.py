@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 import torchvision
 import torch.nn as nn
@@ -165,6 +166,11 @@ class UNet(BaseNet):
         self.d0_concat_fm = torch.cat((self.e0_crop_fm, self.d0_upsample_fm), dim=1)
         self.d0_conv_fm = self.d0_conv(self.d0_concat_fm)
         self.d0_fm = self.d0_conv_last(self.d0_conv_fm)
+
+        #plt.imshow(self.d0_fm[0,0,:,:].detach().numpy())
+        #plt.title("d0_fm")
+        #plt.colorbar()
+        #plt.show()
 
         return self.d0_fm
 

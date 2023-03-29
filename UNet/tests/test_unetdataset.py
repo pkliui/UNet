@@ -165,7 +165,7 @@ class TestUNetDateset(unittest.TestCase):
         masks_folder = "masks"
         im_size = 100
         batch_size = 2
-        validation_split = 0.9
+        validation_split = 0.5
         shuffle_for_split = True
         random_seed_split = 0
         #

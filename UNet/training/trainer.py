@@ -1,10 +1,8 @@
 import torch
 
 from UNet.utils.augment import AugmentImageAndMask, get_augmented_tensors, random_transforms
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from IPython.display import clear_output
-
 from matplotlib import pyplot as plt
 
 def train(model,
@@ -79,7 +77,6 @@ def train(model,
             Y_batch = torch.stack(augmented_y, dim=0)
             # print("augmented_x ", X_batch.shape)
             # print("augmented_y ", Y_batch.shape)
-
             # print("batch ", ii, " out of ", len(data_tr) )
             # epochs counter
             ii += 1

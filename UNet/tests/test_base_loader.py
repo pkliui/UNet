@@ -50,9 +50,11 @@ class TestBaseDataLoader(unittest.TestCase):
         # instantiate class
         self.bdl = BaseDataLoader(dataset=["somedummydata", "somedummydata"],
                                   batch_size=1,
-                                  validation_split=0,
+                                  validation_split=0.5,
                                   shuffle_for_split=True,
                                   random_seed_split=0)
         self.assertEqual(self.bdl.dataset, ["somedummydata", "somedummydata"])
         self.assertEqual(self.bdl.batch_size, 1)
-        self.assertEqual(self.bdl.validation_split, 0)
+        self.assertEqual(self.bdl.validation_split, 0.5)
+
+

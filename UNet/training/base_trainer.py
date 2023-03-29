@@ -1,8 +1,6 @@
+import matplotlib.pyplot as plt
 import torch
 from UNet.utils import augment
-from UNet.models.unet import UNet
-from UNet.metrics import bce_loss
-from matplotlib import pyplot as plt
 
 
 """
@@ -15,11 +13,12 @@ class BaseTrainer:
     def __init__(self,
                  model=None,
                  criterion=None,
+                 metric=None,
                  optimizer=None,
                  data_loader=None,
                  epochs=None,
-                 save_dir=None,
-                 save_model_frequency=None):
+                 lr_sched=None,
+                 device=None):
         """
         Initializes BaseTrainer class
         ---
@@ -35,29 +34,40 @@ class BaseTrainer:
             SplitDataLoader that provides training and validation loaders
         epochs: int
             Number of epochs for training
-        save_dir: str
-            Directory to save tensorboard logs and models
-        save_model_frequency: int
-            Frequency (in epochs) to save the model
+        lr_sched:
+            Learning rate scheduler
+            Default: None
+        device:
+            Device to use for training
+        ---
+        Return
+        ---
+
         """
         self.model = model
         self.criterion = criterion
+        self.metric = metric
         self.optimizer = optimizer
-        self.train_loader = data_loader.train_loader
-            #self.n_train_batch = len(data_loader.train_loader)
-            #self.n_val_batch = len(data_loader.val_loader)
+        #
+        # load training data - this is a mandatory step for training
+        # unless we load validation data only
+        if hasattr(data_loader, "train_loader"):
+            self.train_loader = data_loader.train_loader
         #
         # load validation data if any
         if hasattr(data_loader, "val_loader"):
             self.val_loader = data_loader.val_loader
             self.validate = True
+        else:
+            self.validate = False
         #
         self.epochs = epochs
         self.xbatch = None
         self.ybatch = None
-        #self.save_dir = save_dir
-        #self.writer = SummaryWriter(os.path.join(save_dir, "summaries"))
-        #self.save_model_frequency = save_model_frequency
+        # batches of training images and masks
+        #
+        self.lr_sched = lr_sched
+        self.device = device
 
     def train(self):
         """
@@ -67,103 +77,174 @@ class BaseTrainer:
         #initialization of the loss and score values
         train_loss_values = []
         val_loss_values = []
-        avg_score_values = []
+        score_values = []
         #
         # #iterate through epochs
         for epoch in range(self.epochs):
-             #
-             # epochs counter
-            ii = 0
             print('* Epoch %d/%d' % (epoch + 1, self.epochs))
-             #
-            # initialization of average loss values at the current epoch
-            avg_loss = 0
-            val_avg_loss = 0
             #
-        #     ###############
-        #     # train model
-        #     ###############
-            self.model.train()
-        #     #
-            for _, sample in enumerate(self.train_loader):
-                X_batch = sample[0]
-                Y_batch = sample[1]
+            # make a train step
+            avg_train_loss = self.training_step()
+            if self.device is not None:
+                avg_train_loss = avg_train_loss.detach().cpu().numpy()
+            train_loss_values.append(avg_train_loss)
+            #
+            # make a validation step
+            if self.validate:
+                avg_val_loss, avg_score = self.validation_step()
+                if self.device is not None:
+                    avg_val_loss = avg_val_loss.detach().cpu().numpy()
+                    avg_score = avg_score.detach().cpu().numpy()
+                val_loss_values.append(avg_val_loss)
+                score_values.append(avg_score)
+            #else:
+            #    pass
+            #
+            # make a scheduler step if required
+            if self.lr_sched is not None:
+                self.lr_sched.step()
 
-        #         # augment images
-                print("X batch", X_batch.shape)
-                print("Y batch", Y_batch.shape)
-                print(Y_batch[0].unique())
-                #plt.imshow(Y_batch[0])
+    def training_step(self):
+        """
+        Training step for one batch.
+        ---
+        Args:
+        ---
+        batch: batch of data
+        ---
+        Returns:
+        ---
+        loss: training loss value, sum for all batches
+        """
+        # initialization of loss values at the current epoch
+        train_loss_all_batches = 0
+        print("training step ... ")
+        self.model.train()
+
+        for _, batch in enumerate(self.train_loader):
+
+            # get images and masks
+            X_batch = batch[0]
+            Y_batch = batch[1]
+            #
+            # reshape batches to the size (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
+            X_batch, Y_batch = augment.reshape_batches(X_batch, Y_batch)
+            #
+            # augment images together with masks
+            augmented_xy_pairs = augment.AugmentImageAndMask(tensors=(X_batch, Y_batch),
+                                                             transform=augment.random_transforms(prob=0.5))
+            augmented_x, augmented_y = augment.get_augmented_tensors(*augmented_xy_pairs)
+            # the star * in *augmented_xy_pairs is needed to unpack the tuple of (x,y) tuples into individual (x,y) tuples
+            self.xbatch = torch.stack(augmented_x, dim=0)
+            self.ybatch = torch.stack(augmented_y, dim=0)
+            #
+            if self.device is not None:
+                self.xbatch = self.xbatch.to(self.device)
+                self.ybatch = self.ybatch.to(self.device)
+
+            # set parameter gradients to zero
+            self.optimizer.zero_grad()
+            #
+            # forward propagation
+            Y_pred = self.model(X_batch)
+            loss = self.criterion(Y_pred, Y_batch)
+            #
+            # backward propagation
+            loss.backward()
+            #
+            # update weights
+            self.optimizer.step()
+            #
+            # add loss for the current batch to the total loss
+            train_loss_all_batches += loss
+        # calculate an average loss across all the batches to show the user
+        avg_train_loss = train_loss_all_batches / len(self.train_loader)
+        print("avg train loss", avg_train_loss)
+
+        return avg_train_loss
+
+    def validation_step(self):
+        """
+        Validation step for one batch.
+        """
+        # set dropout and batch normalization layers to evaluation mode before running the inference
+
+        with torch.no_grad():
+            self.model.eval()
+            # initialization of loss values at the current epoch
+            val_loss_all_batches = 0
+            score = 0
+            #
+            for _, sample_val in enumerate(self.val_loader):
+                X_val = sample_val[0]
+                Y_val= sample_val[1]
+                #print("X val", X_val.shape)
+                #print("Y val", Y_val.shape)
+                #print(Y_val[0].unique())
+
+                #plt.imshow(Y_val[0])
+                #plt.title("Y_val")
                 #plt.show()
-        #         #
-        #         # reshape batches to have the size of
-                  # (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
-                X_batch, Y_batch = augment.reshape_batches(X_batch, Y_batch)
-        #
-        #         # augment images
-                print("X batch res", X_batch.shape)
-                print("Y batch res", Y_batch.shape)
-        #
-                augmented_xy_pairs = augment.AugmentImageAndMask(tensors=(X_batch, Y_batch),
-                                                          transform=augment.random_transforms(prob=0.5))
-        #         #
-        #         # note:  the star * in *augmented_xy_pairs is needed to unpack the tuple of (x,y) tuples
-        #         # into individual (x,y) tuples
-                augmented_x, augmented_y = augment.get_augmented_tensors(*augmented_xy_pairs)
-                X_batch = torch.stack(augmented_x, dim=0)
-                Y_batch = torch.stack(augmented_y, dim=0)
-                self.xbatch = X_batch
-                self.ybatch = Y_batch
-                print("augmented_x ", X_batch.shape)
-                print("augmented_y ", Y_batch.shape)
+                #
+                # reshape batches to have the size of
+                # (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
+                X_val, Y_val = augment.reshape_batches(X_val, Y_val)
+                #print("X val res", X_val.shape)
+                #print("Y val res", Y_val.shape)
+                #if self.device is not None:
+                #    X_val = X_val.to(self.device)
+                    #Y_val = Y_val.to(self.device)
+                # get logits for val set
+                #Y_hat = self.model(X_val)
+                Y_hat =  self.model(X_val.to(self.device)).detach().to('cpu')
 
-                 #print("batch ", ii, " out of ", len(data_tr) )
-                 # epochs counter
-                 #ii += 1
-                 # print("X_batch.shape from data_tr",X_batch.shape)
-                 # print("Y_batch.shape from data_tr",Y_batch.shape)
-                 #
+                #plt.imshow(Y_hat[0][0, :, :])
+                #plt.title("Y_hat")
+                #plt.colorbar()
+                #plt.show()
 
-                 # data to device
-                #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-                #X_batch = X_batch.to(device)
-                 # print("X_batch.shape to device",X_batch.shape)
-                #Y_batch = Y_batch.to(device)
-                 # print("Y_batch.shape to device",Y_batch.shape)
-             #
-                # set parameter gradients to zero
-                self.optimizer.zero_grad()
-                 #
-                 # forward propagation
-                 #
-                 # get logits
-                Y_pred = self.model(X_batch)
-                # print("Y_pred.shape",Y_pred.shape)
-                 # compute train loss
-                loss_fn = bce_loss()
-                print("loss computing ...")
-                print("y batch ", Y_batch[0].unique())
-                print("y pred ", Y_pred[0].detach().unique())
 
-                target = torch.ones([2, 3], dtype=torch.float32)  # 64 classes, batch size = 10
-                print("target", target)
-                output = torch.full([2, 3], -1.5)  # A prediction (logit)
-                print("output", output)
-                pos_weight = torch.ones([3])  # All weights are equal to 1
-                criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-                criterion(output, target)  # -log(sigmoid(1.5))
-                #tensor(0.2014)
+                #if self.device is not None:
+                #    Y_hat = Y_hat.detach().to('cpu')
+                    #Y_val = Y_val.detach().to('cpu')
 
-                #loss = loss_fn(Y_pred[0].detach(), Y_batch[0])  # forward-pass - BCEWithLogitsLoss (pred,prob)
-                 #
-                 # backward-pass
-                 #
-                #loss.backward()
-                 # update weights
-                #self.optimizer.step()
-                 #
-                 # calculate loss to show the user
-                #avg_loss += loss
-            #avg_loss = avg_loss / len(self.train_loader)
+                Y_hat_2plot = torch.round(torch.sigmoid(Y_hat))
+
+                #plt.imshow(Y_hat_2plot[0][0, :, :])
+                #plt.title("Y_hat_2plot")
+                #plt.colorbar()
+                #plt.show()
+                #
+                # compute val loss and append it
+                loss = self.criterion(Y_hat, Y_val)
+                # add loss for the current batch to the total loss
+                val_loss_all_batches += loss
+                #
+                # compute score for the current batch
+                # score += metric(Y_hat_2plot.to(device), Y_val.to(device)).mean().item()
+                # temporarily replace by metric().mean without .item() because this leads to float has no attribute detach error
+                # see https://github.com/horovod/horovod/issues/852
+
+                #if self.device is not None:
+                #score += self.metric(Y_hat, Y_val).mean()
+                score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
+
+            #score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
+            #else:
+                #    score += self.metric(Y_hat_2plot, Y_val).mean()
+                print("score", score)
             #
-            #print('loss: %f' % avg_loss)
+            # calculate an average loss across all the batches to show the user
+            avg_val_loss = val_loss_all_batches / len(self.val_loader)
+            #avg_val_loss = avg_val_loss.detach().cpu().numpy()
+            print("avg val loss", avg_val_loss)
+            #
+            # compute and append average score at current epoch
+            avg_score = score / len(self.val_loader)
+            #avg_score = avg_score.detach().cpu().numpy()
+            #if self.device is not None:
+            #    avg_score = avg_score.detach().cpu().numpy()
+
+            print('avg_score: %f' % avg_score)
+
+            return avg_val_loss, avg_score

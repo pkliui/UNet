@@ -48,7 +48,6 @@ class TestSplitDataLoader(unittest.TestCase):
         masks_folder = "masks"
         files_structure = 1
         batch_size = 1
-
         im_size = 100
         transform = transforms.Compose([
             Resize((im_size,im_size),
@@ -62,7 +61,6 @@ class TestSplitDataLoader(unittest.TestCase):
         unet_data = UNetDataset(root_dir=root_dir, images_folder=images_folder,
                                 masks_folder=masks_folder, transform=transform,
                                 files_structure = files_structure)
-        #
         #
         # make a dataloader from the dataset
         sdl = SplitDataLoader(dataset=unet_data,

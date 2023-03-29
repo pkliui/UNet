@@ -23,8 +23,13 @@ from UNet.classes.preprocess import Resize
 
 from UNet.models.unet import UNet
 
-from UNet.metrics import bce_loss, iou_pytorch
+from UNet.metrics import iou_pytorch
 
+
+import numpy as np
+import torch, os
+import random
+import torch.nn as nn
 
 
 @ddt
@@ -55,53 +60,74 @@ class TestBaseTrainer(unittest.TestCase):
     #    for var in ["model"]:
     #        self.assertIn(var, self.basetrainer.__dict__)
 
+
+
+    # fix seed for reproducible results
+    def set_seed(self, seed):
+        torch.manual_seed(seed)
+        #torch.use_deterministic_algorithms(True)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        np.random.seed(seed)
+        random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+
     def test_trainer_check_batch_size(self):
-        # specify the root dir, images' and masks' folders and the image size
-        extension = "*.bmp"
-        #extension = "*.jpeg"
-        root_dir = "/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/"
-        images_folder = "images"
-        masks_folder = "masks"
-
-        SIZE_X = (572, 572) # size of input images
-        SIZE_Y = (388, 388) # size of input segmented images
-
-        batch_size = 1
-        validation_split = 0
-        shuffle_for_split = True
-        random_seed_split = 0
         #
-        # specify an image transform function
-        transform = transforms.Compose([Resize(SIZE_X, SIZE_Y)])
+        # set data loader
         #
-        # read masks and images
-        unet_data = UNetDataset(root_dir, images_folder, masks_folder, extension, transform=transform)
-        # make a dataloader from the dataset
+        # specify the size of the input and output images
+        SIZE_X = (572, 572)
+        SIZE_Y = (388, 388)
+        BATCH_SIZE = 4
+        #
+        # read data
+        unet_data = UNetDataset(root_dir="/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/",
+                                images_folder="images", masks_folder="masks", extension="*.bmp",
+                                transform=transforms.Compose([Resize(SIZE_X, SIZE_Y)]))
+        # create data loader - only train data
         data_loader = BaseDataLoader(dataset=unet_data,
-                                     batch_size=batch_size,
-                                     validation_split=validation_split,
-                                     shuffle_for_split=shuffle_for_split,
-                                     random_seed_split=random_seed_split)
+                                     batch_size=BATCH_SIZE,
+                                     validation_split=0,
+                                     shuffle_for_split=True,
+                                     random_seed_split=0)
+        print(data_loader.__dict__)
+        if hasattr(data_loader, "val_loader"):
+            print("has val loader")
+        else:
+            print("no val loader")
+        #
+        # set base trainer
+        self.set_seed(42)
 
-        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # Define the model
-        model = UNet()#.to(device)
-        save_dir = root_dir
-
-        # Define the loss function and the optimizer
-        criterion = bce_loss()
-        optimizer = optim.AdamW(model.parameters(), lr=0.4)
-
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # define the model
+        model = UNet().to(device)
+        # define the quality metric
+        metric = iou_pytorch
+        # define the loss function and the optimizer
+        criterion = torch.nn.BCEWithLogitsLoss()
+        optimizer = optim.AdamW(model.parameters(), lr=5e-3)
+        #save_dir = root_dir
         #import torch
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(device)
-
+        #print(device)
+        # scheduler
+        scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=50, gamma=0.1)
         basetrainer = BaseTrainer(model=model,
+                                  metric=metric,
                                   criterion=criterion,
                                   optimizer=optimizer,
                                   data_loader=data_loader,
-                                  epochs=1)
+                                  epochs=1,
+                                  lr_sched=scheduler,
+                                  device=device)
 
         basetrainer.train()
 
-        #rint("xbatch len", len(basetrainer.xbatch))
+        print("xbatch len", len(basetrainer.xbatch))
+        self.assertEqual(len(basetrainer.xbatch), BATCH_SIZE)
+        self.assertEqual(len(basetrainer.ybatch), BATCH_SIZE)
+
+        #print("data loader", len(val_loader.train_loader.dataset))
+        print("data loader", len(data_loader.train_loader.dataset))

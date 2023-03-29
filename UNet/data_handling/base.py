@@ -48,10 +48,10 @@ class BaseDataset(Dataset):
 
 class BaseDataLoader:
     def __init__(self, dataset=None,
-                 batch_size=1,
-                 validation_split=0,
+                 batch_size=None,
+                 validation_split=None,
                  shuffle_for_split=True,
-                 random_seed_split=0):
+                 random_seed_split=None):
         """
         Initializes the dataloader.
         3 configuration are supported:
@@ -61,6 +61,10 @@ class BaseDataLoader:
                 Only self.val_loader is initialized
             *   dataset to be splitted between validation and training
                 Both self.train_loader and self.val_loader are initialized
+        ---
+        Args
+        ---
+        
         """
         self.dataset = dataset
         self.batch_size = batch_size
@@ -68,13 +72,15 @@ class BaseDataLoader:
 
         # case no validation set
         if self.validation_split == 0:
-            print("validation split = 0", self.validation_split)
+            print("validation split = ", self.validation_split)
+            # train loader
             self.train_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
-        # case validation set only (test set)
+        # case validation set only (that is only test set)
         elif self.validation_split == 1:
-            print("validation split = 1", self.validation_split)
+            print("validation split = ", self.validation_split)
+            # set the test set to validation set
             self.val_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
@@ -92,17 +98,20 @@ class BaseDataLoader:
 
             print("int(len(dataset) - split)", int(len(dataset) - split))
             print("split", split)
-            if validation_split >= 0.5 and (len(dataset) - split >= self.batch_size):
-                pass
-            elif validation_split < 0.5 and (split >= self.batch_size):
-                pass
-            else:
-                raise ValueError("Decrease the batch size or change the validation split")
+            #
+            # check that the split is not too small
+            #if validation_split >= 0.5 and (len(dataset) - split >= self.batch_size):
+            #    pass
+            #elif validation_split < 0.5 and (split >= self.batch_size):
+            #    pass
+            #else:
+            #    raise ValueError("Decrease the batch size or change the validation split")
 
             train_sampler = SubsetRandomSampler(indices[split:])
             val_sampler = SubsetRandomSampler(indices[:split])
             #
             # load date with data loaders
+            print("preparing train and val loaders ... ")
             self.train_loader = DataLoader(
                 self.dataset, self.batch_size, sampler=train_sampler)
             self.val_loader = DataLoader(

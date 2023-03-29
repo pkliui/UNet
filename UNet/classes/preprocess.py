@@ -129,14 +129,15 @@ class SplitDataLoader(object):
         # generate len(self.images) random indices as if it were np.arange(len(self.images))
         # False stands for number generation without replacement (no repetitions)
         idx = np.random.choice(len(list(self.dataset)), len(list(self.dataset)), False)
+        print("idx ", idx)
         #
         # split generated indices to train-val-test sets
         tr_idx, vl_idx, ts_idx = np.split(idx, [self.tr, self.tr + self.vl])
+        print("tr idx, .. ", tr_idx, vl_idx, ts_idx)
+        print("tr_idx", tr_idx)
+        print("vl_idx", vl_idx)
+        print("ts_idx", ts_idx)
         assert (len(tr_idx), len(vl_idx), len(ts_idx)) == (self.tr, self.vl, self.ts)
-
-        #print("tr_idx", tr_idx)
-        #print("vl_idx", vl_idx)
-        #print("ts_idx", ts_idx)
         #
         # set random samplers to get random indices for each batch in dataloaders
         train_sampler = SubsetRandomSampler(tr_idx)

@@ -110,7 +110,6 @@ class UNetDataset(BaseDataset):
         print("idx ", idx)
         return sample
 
-
     def read_data(self, root_dir, images_folder, masks_folder, idx, counter):
         """
         reads raw images from a directory
@@ -136,15 +135,12 @@ class UNetDataset(BaseDataset):
             # walk through the root and get images and their masks
             for root, dirs, files in os.walk(root_dir):
                 #print("root ", root)
-
                 #
                 # exclude files and directories starting with .
                 files = [f for f in files if not f[0] == '.']
                 dirs[:] = [d for d in dirs if not d[0] == '.']
                 #print("dirs ", dirs)
                 #print("files ", files)
-                #
-
                 for extension in (tuple(filetypes)):
                     for files in fnmatch.filter(files, extension):
 
@@ -161,8 +157,6 @@ class UNetDataset(BaseDataset):
             images_list = []
             masks_path = []
             masks_list = []
-
-
             # walk through the root and get images and their masks
             for root, dirs, files in os.walk(root_dir):
                 #print("root ", root)
