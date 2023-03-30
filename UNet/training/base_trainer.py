@@ -42,7 +42,7 @@ class BaseTrainer:
         ---
         Return
         ---
-
+        None
         """
         self.model = model
         self.criterion = criterion
@@ -75,17 +75,23 @@ class BaseTrainer:
         """
         #
         #initialization of the loss and score values
+        print("#initialization of the loss and score values")
         train_loss_values = []
         val_loss_values = []
         score_values = []
         #
         # #iterate through epochs
+        print("# #iterate through epochs")
         for epoch in range(self.epochs):
             print('* Epoch %d/%d' % (epoch + 1, self.epochs))
             #
             # make a train step
+            print("# make a train step")
             avg_train_loss = self.training_step()
+            print("avg_train_loss ", avg_train_loss)
             if self.device is not None:
+                # if we use GPU we need to detach the loss value from the computational graph
+                # and move it to the CPU memory to be able to plot it later
                 avg_train_loss = avg_train_loss.detach().cpu().numpy()
             train_loss_values.append(avg_train_loss)
             #
@@ -126,6 +132,7 @@ class BaseTrainer:
             # get images and masks
             X_batch = batch[0]
             Y_batch = batch[1]
+            print("X_batch size  ", X_batch.size())
             #
             # reshape batches to the size (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
             X_batch, Y_batch = augment.reshape_batches(X_batch, Y_batch)
@@ -227,6 +234,11 @@ class BaseTrainer:
 
                 #if self.device is not None:
                 #score += self.metric(Y_hat, Y_val).mean()
+                print("Y_hat_2plot ", Y_hat_2plot)
+                print("Y_val ", Y_val)
+                print("Y_hat_2plot shape ", Y_hat_2plot.shape)
+                print("Y_val shape ", Y_val.shape)
+                print("self.device ", self.device)
                 score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
 
             #score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
