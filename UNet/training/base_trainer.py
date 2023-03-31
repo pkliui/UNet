@@ -190,7 +190,7 @@ class BaseTrainer:
                     #Y_val = Y_val.to(self.device)
                 # get logits for val set
                 #Y_hat = self.model(X_val)
-                Y_hat =  self.model(X_val.to(self.device)).detach().to('cpu')
+                Y_hat =  self.model(X_val.to(self.device))#.detach().to('cpu')
 
                 #plt.imshow(Y_hat[0][0, :, :])
                 #plt.title("Y_hat")
