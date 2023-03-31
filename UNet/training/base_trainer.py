@@ -109,6 +109,7 @@ class BaseTrainer:
             # make a scheduler step if required
             if self.lr_sched is not None:
                 self.lr_sched.step()
+        return train_loss_values, val_loss_values, score_values
 
     def training_step(self):
         """
@@ -128,20 +129,17 @@ class BaseTrainer:
         self.model.train()
 
         for _, batch in enumerate(self.train_loader):
-
             # get images and masks
-            X_batch = batch[0]
-            Y_batch = batch[1]
-            print("X_batch size  ", X_batch.size())
+            print("X_batch size  ", batch[0].size())
             #
             # reshape batches to the size (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
-            X_batch, Y_batch = augment.reshape_batches(X_batch, Y_batch)
+            X_batch, Y_batch = augment.reshape_batches(batch[0], batch[1])
+            print("X_batch size after reshape ", X_batch.size())
             #
             # augment images together with masks
             augmented_xy_pairs = augment.AugmentImageAndMask(tensors=(X_batch, Y_batch),
                                                              transform=augment.random_transforms(prob=0.5))
             augmented_x, augmented_y = augment.get_augmented_tensors(*augmented_xy_pairs)
-            # the star * in *augmented_xy_pairs is needed to unpack the tuple of (x,y) tuples into individual (x,y) tuples
             self.xbatch = torch.stack(augmented_x, dim=0)
             self.ybatch = torch.stack(augmented_y, dim=0)
             #
@@ -158,7 +156,6 @@ class BaseTrainer:
             #
             # backward propagation
             loss.backward()
-            #
             # update weights
             self.optimizer.step()
             #
@@ -183,19 +180,9 @@ class BaseTrainer:
             score = 0
             #
             for _, sample_val in enumerate(self.val_loader):
-                X_val = sample_val[0]
-                Y_val= sample_val[1]
-                #print("X val", X_val.shape)
-                #print("Y val", Y_val.shape)
-                #print(Y_val[0].unique())
-
-                #plt.imshow(Y_val[0])
-                #plt.title("Y_val")
-                #plt.show()
-                #
                 # reshape batches to have the size of
                 # (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
-                X_val, Y_val = augment.reshape_batches(X_val, Y_val)
+                X_val, Y_val = augment.reshape_batches(sample_val[0], sample_val[1])
                 #print("X val res", X_val.shape)
                 #print("Y val res", Y_val.shape)
                 #if self.device is not None:
@@ -239,7 +226,9 @@ class BaseTrainer:
                 print("Y_hat_2plot shape ", Y_hat_2plot.shape)
                 print("Y_val shape ", Y_val.shape)
                 print("self.device ", self.device)
+                print("Y_val shape ", Y_val.shape)
                 score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
+                print("score ", score)
 
             #score += self.metric(Y_hat_2plot.to(self.device), Y_val.to(self.device)).mean()
             #else:
