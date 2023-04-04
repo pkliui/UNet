@@ -1,15 +1,11 @@
 import unittest
+import shutil
+import tempfile
+
 from ddt import ddt
-
-import shutil, tempfile
-
-from UNet.data_handling.unetdataset import UNetDataset
-#from UNet.classes.unetdataset import UNetDataset
-
-from UNet.classes.preprocess import Resize, SplitDataLoader
-
 import numpy as np
-from torchvision import transforms
+
+from UNet.classes.preprocess import Resize
 
 
 @ddt
