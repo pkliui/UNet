@@ -1,9 +1,11 @@
+import os
 import unittest
 from ddt import ddt
 import shutil, tempfile
 
 
 from UNet.data_handling.base import BaseDataLoader
+from UNet.data_handling.unetdataset import UNetDataset
 
 
 @ddt
@@ -56,5 +58,38 @@ class TestBaseDataLoader(unittest.TestCase):
         self.assertEqual(self.bdl.dataset, ["somedummydata", "somedummydata"])
         self.assertEqual(self.bdl.batch_size, 1)
         self.assertEqual(self.bdl.validation_split, 0.5)
+
+    def test_read_batch(self):
+        """
+        test reading batches of data
+        """
+        # set args
+        DATAPATH = os.path.abspath("/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/")
+        images_folder = "images"
+        masks_folder = "masks"
+        extension = "*.bmp"
+        transform = None
+        # read masks and images
+        unet_data = UNetDataset(extension=extension,
+                                root_dir=DATAPATH,
+                                images_folder=images_folder,
+                                masks_folder=masks_folder,
+                                transform=transform)
+
+        #
+        # set args for dataloader
+        batch_size = 1
+        validation_split = 0.75
+        # create the corresponding dataloader for training and validation
+        self.bdl = BaseDataLoader(dataset=unet_data,
+                                     batch_size=batch_size,
+                                     validation_split=validation_split,
+                                  shuffle_for_split=True,
+                                  random_seed_split=0)
+        self.assertEqual(self.bdl.batch_size, 1)
+        self.assertEqual(self.bdl.validation_split, 0.75)
+        self.assertEqual(len(self.bdl.val_loader), 3)
+        self.assertEqual(len(self.bdl.train_loader), 1)
+
 
 
