@@ -10,7 +10,7 @@ BaseDataset is here a pure abstract class, all its members
 need to defined according to the specific shape of the data.
 
 BaseDataLoader is derived from DataLoader, it can be instantiated as
-it is. It handles validation/training split of the input dataset
+it is. It handles validation/training val_split_size of the input dataset
 in which case it has two attributes: train_loader and val_loader.
 """
 
@@ -51,7 +51,7 @@ class BaseDataLoader:
                  batch_size=None,
                  validation_split=None,
                  shuffle_for_split=True,
-                 random_seed_split=None):
+                 random_seed_split=42):
         """
         Initializes the dataloader.
         3 configuration are supported:
@@ -59,11 +59,14 @@ class BaseDataLoader:
                 Only self.train_loader is initialized.
             *   dataset used for validation/testing only (validation_split = 1)
                 Only self.val_loader is initialized
-            *   dataset to be splitted between validation and training
+            *   dataset to be val_split_sizeted between validation and training
                 Both self.train_loader and self.val_loader are initialized
-        ---
-        Args
-        ---
+        :param dataset: Dataset to use for training/validation
+        :param batch_size: Batch size to use for training/validation
+        :param validation_split: Fraction of the dataset to use for validation
+        :param shuffle_for_split: Whether to shuffle the dataset before val_split_sizeting
+        :param random_seed_split: Random seed to use for shuffling the dataset before val_split_sizeting it.
+               Needed to ensure reproducibility of the val_split_size.
         
         """
         self.dataset = dataset
@@ -72,43 +75,46 @@ class BaseDataLoader:
 
         # case no validation set
         if self.validation_split == 0:
-            print("validation split = ", self.validation_split)
+            print("validation val_split_size = ", self.validation_split)
             # train loader
             self.train_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
         # case validation set only (that is only test set)
         elif self.validation_split == 1:
-            print("validation split = ", self.validation_split)
+            print("validation val_split_size = ", self.validation_split)
             # set the test set to validation set
             self.val_loader = DataLoader(
                 self.dataset, self.batch_size, shuffle=True)
 
-        # case training/validation set split
+        # case training/validation set val_split_size
         else:
-            print("validation split = ", self.validation_split)
+            print("validation val_split_size = ", self.validation_split)
             indices = np.arange(len(dataset))
-            # generate random indicies for split
-            if shuffle_for_split:
+            # generate random indicies for val_split_size
+            if shuffle_for_split is True:
                 np.random.seed(random_seed_split)
                 indices = np.random.permutation(indices)
+                print(indices)
             #
             # setup random samplers for data loaders
-            split = int(np.floor(validation_split * len(dataset)))
+            val_split_size = int(np.floor(validation_split * len(dataset)))
 
-            print("int(len(dataset) - split)", int(len(dataset) - split))
-            print("split", split)
+            print("train_split_size ", int(len(dataset) - val_split_size))
+            print("val_split_size", val_split_size)
             #
-            # check that the split is not too small
-            #if validation_split >= 0.5 and (len(dataset) - split >= self.batch_size):
-            #    pass
-            #elif validation_split < 0.5 and (split >= self.batch_size):
-            #    pass
-            #else:
-            #    raise ValueError("Decrease the batch size or change the validation split")
+            # check that the val_split_size is not too big or too small
+            # specifically, check that the remaining smaller portion for train is not smaller than the batch size
+            if validation_split >= 0.5 and (len(dataset) - val_split_size >= self.batch_size):
+                print("the remaining train split size is just right ")
+            # specifically, check that the val_split_size is not smaller than the batch size
+            elif validation_split < 0.5 and (val_split_size >= self.batch_size):
+                print("the val_split_size is just right  ")
+            else:
+                raise ValueError("Decrease the batch size or change the validation val_split_size")
 
-            train_sampler = SubsetRandomSampler(indices[split:])
-            val_sampler = SubsetRandomSampler(indices[:split])
+            train_sampler = SubsetRandomSampler(indices[val_split_size:])
+            val_sampler = SubsetRandomSampler(indices[:val_split_size])
             #
             # load date with data loaders
             print("preparing train and val loaders ... ")
