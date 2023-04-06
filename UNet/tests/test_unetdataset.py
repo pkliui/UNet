@@ -6,7 +6,7 @@ import shutil, tempfile
 from matplotlib import pyplot as plt
 
 from UNet.data_handling.unetdataset import UNetDataset
-from UNet.classes.preprocess import Resize, SplitDataLoader
+from UNet.classes.preprocess import Resize
 from UNet.data_handling.base import BaseDataLoader
 from torch.utils.data import DataLoader, SubsetRandomSampler
 
@@ -165,7 +165,7 @@ class TestUNetDateset(unittest.TestCase):
         masks_folder = "masks"
         im_size = 100
         batch_size = 2
-        validation_split = 0.5
+        validation_split = 0.9
         shuffle_for_split = True
         random_seed_split = 0
         #
