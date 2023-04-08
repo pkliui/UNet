@@ -71,12 +71,10 @@ class TestUNetDateset(unittest.TestCase):
         random_seed_split=0)
 
         # check the batch size
-        for ii in range(len(data_loader.train_loader.dataset)):
-            image, mask = next(iter(data_loader.train_loader))
-            #plt.imshow(image[0].squeeze(), cmap="gray")
-            #plt.show()
-            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
-            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
+        for batch in data_loader.train_loader:
+            self.assertEqual(batch['image'].shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(batch['mask'].shape, (batch_size, im_size, im_size))
+
 
     def test_making_dataset_train_val_50_50(self):
         """
@@ -107,20 +105,14 @@ class TestUNetDateset(unittest.TestCase):
                                      random_seed_split=random_seed_split)
 
         # check the batch size of the train data
-        for ii in range(len(data_loader.train_loader.dataset)):
-            image, mask = next(iter(data_loader.train_loader))
-            #plt.imshow(image[0].squeeze(), cmap="gray")
-            #plt.show()
-            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
-            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
+        for batch in data_loader.train_loader:
+            self.assertEqual(batch['image'].shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(batch['mask'].shape, (batch_size, im_size, im_size))
 
         # check the batch size of the validation data
-        for ii in range(len(data_loader.val_loader.dataset)):
-            image, mask = next(iter(data_loader.val_loader))
-            #plt.imshow(image[0].squeeze(), cmap="gray")
-            #plt.show()
-            self.assertEqual(image.shape, (batch_size, im_size, im_size, 3))
-            self.assertEqual(mask.shape, (batch_size, im_size, im_size))
+        for batch in data_loader.val_loader:
+            self.assertEqual(batch['image'].shape, (batch_size, im_size, im_size, 3))
+            self.assertEqual(batch['mask'].shape, (batch_size, im_size, im_size))
 
     def test_making_dataset_train_val_90_10(self):
         """
