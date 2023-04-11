@@ -14,7 +14,7 @@ This class contains a class to read UNet data
 
 class UNetDataset(BaseDataset):
 
-    def __init__(self, root_dir, images_folder, masks_folder, extension, transform=None):
+    def __init__(self, root_dir=None, images_folder=None, masks_folder=None, extension=None, transform=None):
         """
         Initializes class to read images for UNet image segmentation
         Assumes the following structure of files:
@@ -48,11 +48,15 @@ class UNetDataset(BaseDataset):
         self.images_folder = images_folder
         self.masks_folder = masks_folder
         self.transform = transform
-        self.images_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir,
-                                                                           self.images_folder), self.extension))
-        self.masks_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir,
-                                                                          self.masks_folder), self.extension))
 
+        if os.path.exists(os.path.join(self.root_dir, self.images_folder)):
+            self.images_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir, self.images_folder), self.extension))
+        else:
+            raise ValueError("Invalid images_folder! It must be a valid directory!")
+        if os.path.exists(os.path.join(self.root_dir, self.masks_folder)):
+            self.masks_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir, self.masks_folder), self.extension))
+        else:
+            raise ValueError("Invalid masks_folder! It must be a valid directory!")
 
     def __getitem__(self, item):
         """
@@ -86,7 +90,7 @@ class UNetDataset(BaseDataset):
                 sample = self.transform(sample)
         else:
             raise ValueError("Invalid extension! It must be one of the following: {}".format(filetypes))
-        return sample["image"], sample["mask"]
+        return sample
 
     def __len__(self):
         assert len(self.images_list) == len(self.masks_list)
