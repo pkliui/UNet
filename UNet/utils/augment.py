@@ -120,9 +120,9 @@ def random_transforms(prob=0.5):
     return transform
 
 
-def get_augmented_tensors(*augmented_xy_pairs):
+def get_augmented_tensors(*augmented_pairs):
     """
-    unzips (reorders) the ouput of AugmentImageAndMask class augmented_xy_pairs
+    unzips (reorders) the ouput of AugmentImageAndMask class augmented_pairs
     so that the augmented images and augmented masks are in two separate tensors
     ---
     input
@@ -138,35 +138,86 @@ def get_augmented_tensors(*augmented_xy_pairs):
     """
     #
     # note:
-    # the star in *augmented_xy_pairs is needed to unpack the list so that all elements of it can be passed as different parameters.
-    augmented_xy = list(zip(*augmented_xy_pairs))
+    # the star in *augmented_pairs is needed to unpack the list so that all elements of it can be passed as different parameters.
+    augmented_xy = list(zip(*augmented_pairs))
     return augmented_xy[0], augmented_xy[1]
 
 
-def reshape_batches(X_batch, Y_batch):
+def reshape_batches(images_batch, masks_batch):
     """
-    checks the shape of the input batches
-    ensures the shape is (batch size, 3, width, height) for images
-    and (batch size, 1, width, height) for masks
-    :return: X_batch of shape (batch size, 3, width, height), Y_batch of shape (batch size, 1, width, height)
+    reshapes batches of images and masks to the shape expected by the model
+    ---
+    input
+    ---
+    images_batch: list of numpy arrays
+        each array is a batch of images
+    masks_batch: list of numpy arrays
+        each array is a batch of masks
+    ---
+    return
+    ---
+    reshaped images and masks
+    as torch tensors
     """
-    X_batch = np.array(X_batch, np.float32)
-    Y_batch = np.array(Y_batch, np.float32)
+    images_batch = np.array(images_batch, np.float32)
+    masks_batch = np.array(masks_batch, np.float32)
 
-    if len(X_batch.shape) == 4 and X_batch.shape[-1] == 3:
-        X_batch_reshaped = np.rollaxis(X_batch, 3, 1)
-    elif len(X_batch.shape) == 4 and X_batch.shape[-3] == 3:
-        X_batch_reshaped = X_batch
+    if len(images_batch.shape) == 4 and images_batch.shape[-1] == 3:
+        images_batch_reshaped = np.rollaxis(images_batch, 3, 1)
+    elif len(images_batch.shape) == 4 and images_batch.shape[-3] == 3:
+        images_batch_reshaped = images_batch
     else:
-        raise ValueError("Image's dimensions must be (batch_size, 3, width, height) or (batch_size, width, height, 3)! Current image's shape is {}".format(X_batch.shape))
+        raise ValueError("Image's dimensions must be (batch_size, 3, width, height) or (batch_size, width, height, 3)! Current image's shape is {}".format(images_batch.shape))
 
-    if len(Y_batch.shape) == 4 and Y_batch.shape[-1] == 1:
-        Y_batch_reshaped = np.rollaxis(Y_batch, 3, 1)
-    elif len(Y_batch.shape) == 4 and Y_batch.shape[-3] == 1:
-        Y_batch_reshaped = Y_batch
-    elif len(Y_batch.shape) == 3:
-        Y_batch_reshaped = Y_batch[:, np.newaxis]
+    if len(masks_batch.shape) == 4 and masks_batch.shape[-1] == 1:
+        masks_batch_reshaped = np.rollaxis(masks_batch, 3, 1)
+    elif len(masks_batch.shape) == 4 and masks_batch.shape[-3] == 1:
+        masks_batch_reshaped = masks_batch
+    elif len(masks_batch.shape) == 3:
+        masks_batch_reshaped = masks_batch[:, np.newaxis]
     else:
-        raise ValueError("Mask's dimensions must be (batch_size, width, height)! Current mask's shape is {}".format(Y_batch.shape))
+        raise ValueError("Mask's dimensions must be (batch_size, width, height)! Current mask's shape is {}".format(masks_batch.shape))
 
-    return torch.from_numpy(X_batch_reshaped), torch.from_numpy(Y_batch_reshaped)
+    return torch.from_numpy(images_batch_reshaped), torch.from_numpy(masks_batch_reshaped)
+
+
+def augment_batch(batch, device, prob=0.5):
+    """
+    Augments a batch of images and masks
+    ---
+    Parameters
+    ---
+    batch: tuple of two tensors
+        batch[0] is a tensor of images
+        batch[1] is a tensor of masks
+    device: torch.device
+        device to which the augmented batch will be moved
+    prob: float between 0 and 1
+        probability of applying random transformations (the same for all transformations)
+        Default: 0.5
+    ---
+    Return
+    ---
+    xbatch: torch.Tensor
+        augmented batch of images
+    ybatch: torch.Tensor
+        augmented batch of masks
+    """
+    # reshape batches to the size (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
+    images_batch, masks_batch = reshape_batches(batch['image'], batch['mask'])
+    #
+    # augment images together with masks
+    augmented_pairs = AugmentImageAndMask(tensors=(images_batch, masks_batch),
+                                                     transform=random_transforms(prob=prob))
+    # unzip augmented images and masks
+    augmented_x, augmented_y = get_augmented_tensors(*augmented_pairs)
+    print("augemented x shape ", augmented_x.shape)
+    # stack augmented images and masks into a single tensor
+    xbatch = torch.stack(augmented_x, dim=0)
+    print("augemented x batch ", xbatch.shape)
+    ybatch = torch.stack(augmented_y, dim=0)
+    #
+    if device is not None:
+        xbatch = xbatch.to(device)
+        ybatch = ybatch.to(device)
+    return xbatch, ybatch
