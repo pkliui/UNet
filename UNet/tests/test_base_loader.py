@@ -11,17 +11,7 @@ from UNet.data_handling.unetdataset import UNetDataset
 @ddt
 class TestBaseDataLoader(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        pass
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
     def setUp(self):
-        # create an instance of BaseDataLoader class
-        #self.bdl = BaseDataLoader()
         # create a temporary directory
         self.test_dir = tempfile.mkdtemp()
 
@@ -61,7 +51,7 @@ class TestBaseDataLoader(unittest.TestCase):
 
     def test_read_batch(self):
         """
-        test reading batches of data
+        test reading batches of existing data
         """
         # set args
         DATAPATH = os.path.abspath("/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/")
@@ -86,9 +76,13 @@ class TestBaseDataLoader(unittest.TestCase):
                                      validation_split=validation_split,
                                   shuffle_for_split=True,
                                   random_seed_split=0)
+        # check the batch size
         self.assertEqual(self.bdl.batch_size, 1)
+        # check the validation split
         self.assertEqual(self.bdl.validation_split, 0.75)
+        # check the number of batches for validation
         self.assertEqual(len(self.bdl.val_loader), 3)
+        # check the number of batches for training
         self.assertEqual(len(self.bdl.train_loader), 1)
 
 
