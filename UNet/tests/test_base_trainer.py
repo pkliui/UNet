@@ -23,7 +23,7 @@ from UNet.classes.preprocess import Resize
 
 from UNet.models.unet import UNet
 
-from UNet.metrics import iou_pytorch
+from UNet.metrics.metrics import iou_tgs_challenge
 
 
 import numpy as np
@@ -79,19 +79,20 @@ class TestBaseTrainer(unittest.TestCase):
         # specify the size of the input and output images
         SIZE_X = (572, 572)
         SIZE_Y = (388, 388)
-        BATCH_SIZE = 4
+        BATCH_SIZE = 2
         #
         # read data
         unet_data = UNetDataset(root_dir="/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/",
                                 images_folder="images", masks_folder="masks", extension="*.bmp",
                                 transform=transforms.Compose([Resize(SIZE_X, SIZE_Y)]))
+
         # create data loader - only train data
         data_loader = BaseDataLoader(dataset=unet_data,
                                      batch_size=BATCH_SIZE,
                                      validation_split=0,
                                      shuffle_for_split=True,
                                      random_seed_split=0)
-        print(data_loader.__dict__)
+        #print(data_loader.__dict__)
         if hasattr(data_loader, "val_loader"):
             print("has val loader")
         else:
@@ -104,10 +105,10 @@ class TestBaseTrainer(unittest.TestCase):
         # define the model
         model = UNet().to(device)
         # define the quality metric
-        metric = iou_pytorch
+        metric = iou_tgs_challenge
         # define the loss function and the optimizer
         criterion = torch.nn.BCEWithLogitsLoss()
-        optimizer = optim.AdamW(model.parameters(), lr=5e-3)
+        optimizer = optim.AdamW(model.parameters(), lr=5e-1)
         #save_dir = root_dir
         #import torch
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -119,7 +120,7 @@ class TestBaseTrainer(unittest.TestCase):
                                   criterion=criterion,
                                   optimizer=optimizer,
                                   data_loader=data_loader,
-                                  epochs=1,
+                                  n_epochs=1,
                                   lr_sched=scheduler,
                                   device=device)
 
