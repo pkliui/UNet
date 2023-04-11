@@ -1,43 +1,67 @@
-import torch
+#import packages
+import sys
+import glob, os, fnmatch
+
+import torch.nn as nn
 import torch.optim as optim
-from train import train
-from unet import UNet
-from metrics  import bce_loss, iou_pytorch
+from torchvision import transforms
 
-#
-# set parameters
-#
-SIZE_X = (572, 572) # size of input images
-SIZE_Y = (388, 388) # size of input segmented images
-#
-BATCH_SIZE = 8 # batch size
-#
-TRAIN_SHARE = 100 # size of train set
-VAL_SHARE = 50# size of val set
-TEST_SHARE = 50# size of test  set
-#
-MAX_EPOCHS = 150 # number of epochs
-LEARNING_RATE = 5e-3 # learning rate
-#
-SCHEDULER_STEP = 50 # scheduler step
-SCHEDULER_GAMMA = 0.1
-
+from UNet.data_handling.base import BaseDataLoader
+from UNet.models.unet import UNet
+from UNet.training.base_trainer import BaseTrainer
+from UNet.data_handling.unetdataset import UNetDataset
+from UNet.classes.preprocess import Resize
+from UNet.metrics.metrics import iou_tgs_challenge
 
 
 # use cuda if available
+import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
 
-# model
-model = UNet().to(device)
-# optimizer
-opt = optim.AdamW(model.parameters(), lr=LEARNING_RATE)
-# loss
-loss_fn = bce_loss()
-# metric
-metric = iou_pytorch()
-# scheduler
-scheduler = optim.lr_scheduler.StepLR(optimizer=opt, step_size=SCHEDULER_STEP, gamma=SCHEDULER_GAMMA)
+# set parameters
+DATAPATH = os.path.abspath("/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/")
+SIZE_X = (572, 572) # size of input images
+SIZE_Y = (388, 388) # size of input segmented images
 
-# train
-train_loss_values, val_loss_values, avg_score_values = train(model, opt, loss_fn, MAX_EPOCHS, BATCH_SIZE, data_tr, data_val, metric, lr_sched=scheduler)
+LEARNING_RATE = 1e-1 # learning rate
+BATCH_SIZE = 1 # batch size
+VALIDATION_SPLIT = 0.25 # validation split
+
+MAX_EPOCHS = 2 # number of epochs
+
+unet_dataset = UNetDataset(
+    root_dir=DATAPATH,
+    images_folder="images",
+    masks_folder="masks",
+    extension="*.bmp",
+    transform=transforms.Compose([Resize(SIZE_X, SIZE_Y)]))
+
+# Create the corresponding dataloader for training and validation
+data_loader = BaseDataLoader(dataset=unet_dataset,
+                             batch_size=BATCH_SIZE,
+                             validation_split=VALIDATION_SPLIT,
+                             )
+
+# Define the model
+unet_model = UNet()
+save_dir = os.getcwd()+'/runs/exp1'
+
+# Define the loss function and the optimizer
+bce_loss = nn.BCEWithLogitsLoss()
+unet_optimizer = optim.AdamW(unet_model.parameters(), lr=LEARNING_RATE)
+
+# Initialize the trainer
+basetrainer = BaseTrainer(model = unet_model,
+                          criterion = bce_loss,
+                          metric = iou_tgs_challenge,
+                          optimizer = unet_optimizer,
+                          data_loader = data_loader,
+                          epochs = MAX_EPOCHS,
+                          device = device)
+
+
+# Start training
+train_loss_values, val_loss_values, avg_score_values = basetrainer.train()
+
 
