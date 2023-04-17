@@ -46,7 +46,9 @@ def iou(outputs: torch.Tensor, labels: torch.Tensor):
     return iou
 
 # BCE loss
-bce_loss = torch.nn.BCEWithLogitsLoss()
+def bce_loss(pos_weight: torch.Tensor = None):
+    """ Binary cross entropy loss"""
+    return torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
 def dice_coefficient(iou: torch.Tensor):
