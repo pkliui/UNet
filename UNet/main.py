@@ -16,6 +16,10 @@ from UNet.metrics.metrics import iou_tgs_challenge
 
 # use cuda if available
 import torch
+
+from UNet.utils.augment import AugmentImageAndMask, random_transforms, get_augmented_tensors, \
+    get_augmented_images_and_masks
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
@@ -29,6 +33,11 @@ BATCH_SIZE = 1 # batch size
 VALIDATION_SPLIT = 0.25 # validation split
 
 MAX_EPOCHS = 2 # number of epochs
+
+SCHEDULER_STEP = 50 # scheduler step
+SCHEDULER_GAMMA = 0.1 # scheduler gamma
+
+EARLY_STOP_PATIENCE = 2 # early stopping patience
 
 unet_dataset = UNetDataset(
     root_dir=DATAPATH,
@@ -51,15 +60,21 @@ save_dir = os.getcwd()+'/runs/exp1'
 bce_loss = nn.BCEWithLogitsLoss()
 unet_optimizer = optim.AdamW(unet_model.parameters(), lr=LEARNING_RATE)
 
+# scheduler
+scheduler = optim.lr_scheduler.StepLR(optimizer=unet_optimizer, step_size=SCHEDULER_STEP, gamma=SCHEDULER_GAMMA)
+
 # Initialize the trainer
 basetrainer = BaseTrainer(model = unet_model,
-                          criterion = bce_loss,
+                          loss_function = bce_loss,
                           metric = iou_tgs_challenge,
                           optimizer = unet_optimizer,
                           data_loader = data_loader,
-                          epochs = MAX_EPOCHS,
-                          device = device)
-
+                          n_epochs = MAX_EPOCHS,
+                          lr_sched=scheduler,
+                          device = device,
+                          early_stop_save_dir=DATAPATH,
+                          early_stop_patience=EARLY_STOP_PATIENCE,
+                          save_dir=DATAPATH)
 
 # Start training
 train_loss_values, val_loss_values, avg_score_values = basetrainer.train()
