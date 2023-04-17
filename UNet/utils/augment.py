@@ -96,7 +96,6 @@ class AugmentImageAndMask(torch.utils.data.Dataset):
         return x, y
 
 
-
 def random_transforms(prob=0.5):
     """
     Defines transforms for image augmentation
@@ -138,8 +137,12 @@ def get_augmented_tensors(*augmented_pairs):
     """
     #
     # note:
-    # the star in *augmented_pairs is needed to unpack the list so that all elements of it can be passed as different parameters.
+    # the star in *augmented_pairs is needed to unpack the list
+    # so that all elements of it can be passed as different parameters.
     augmented_xy = list(zip(*augmented_pairs))
+
+
+
     return augmented_xy[0], augmented_xy[1]
 
 
@@ -181,15 +184,16 @@ def reshape_batches(images_batch, masks_batch):
     return torch.from_numpy(images_batch_reshaped), torch.from_numpy(masks_batch_reshaped)
 
 
-def augment_batch(batch, device, prob=0.5):
+def augment_batch(images_batch, masks_batch, device, prob=0.5):
     """
     Augments a batch of images and masks
     ---
     Parameters
     ---
-    batch: tuple of two tensors
-        batch[0] is a tensor of images
-        batch[1] is a tensor of masks
+    images_batch: torch.Tensor
+        batch of images
+    masks_batch: torch.Tensor
+        batch of masks
     device: torch.device
         device to which the augmented batch will be moved
     prob: float between 0 and 1
@@ -204,17 +208,15 @@ def augment_batch(batch, device, prob=0.5):
         augmented batch of masks
     """
     # reshape batches to the size (batch size, 3, width, height) for X and (batch size, 1, width, height) for Y
-    images_batch, masks_batch = reshape_batches(batch['image'], batch['mask'])
+    images_batch, masks_batch = reshape_batches(images_batch, masks_batch)
     #
     # augment images together with masks
     augmented_pairs = AugmentImageAndMask(tensors=(images_batch, masks_batch),
                                                      transform=random_transforms(prob=prob))
     # unzip augmented images and masks
     augmented_x, augmented_y = get_augmented_tensors(*augmented_pairs)
-    print("augemented x shape ", augmented_x.shape)
     # stack augmented images and masks into a single tensor
     xbatch = torch.stack(augmented_x, dim=0)
-    print("augemented x batch ", xbatch.shape)
     ybatch = torch.stack(augmented_y, dim=0)
     #
     if device is not None:
