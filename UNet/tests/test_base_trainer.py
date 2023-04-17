@@ -107,7 +107,7 @@ class TestBaseTrainer(unittest.TestCase):
         # define the quality metric
         metric = iou_tgs_challenge
         # define the loss function and the optimizer
-        criterion = torch.nn.BCEWithLogitsLoss()
+        loss_function = torch.nn.BCEWithLogitsLoss()
         optimizer = optim.AdamW(model.parameters(), lr=5e-1)
         #save_dir = root_dir
         #import torch
@@ -117,7 +117,7 @@ class TestBaseTrainer(unittest.TestCase):
         scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=50, gamma=0.1)
         basetrainer = BaseTrainer(model=model,
                                   metric=metric,
-                                  criterion=criterion,
+                                  loss_function=loss_function,
                                   optimizer=optimizer,
                                   data_loader=data_loader,
                                   n_epochs=1,
