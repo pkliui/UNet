@@ -40,14 +40,16 @@ class TestBaseDataLoader(unittest.TestCase):
         test reading some non-existing data
         """
         # instantiate class
-        self.bdl = BaseDataLoader(dataset=["somedummydata", "somedummydata"],
+        self.bdl = BaseDataLoader(dataset=["somedummydata", "somedummydata", "somedummydata", "somedummydata"],
                                   batch_size=1,
-                                  validation_split=0.5,
+                                  validation_split=0.25,
+                                  test_split=0.25,
                                   shuffle_for_split=True,
                                   random_seed_split=0)
-        self.assertEqual(self.bdl.dataset, ["somedummydata", "somedummydata"])
+        self.assertEqual(self.bdl.dataset, ["somedummydata", "somedummydata", "somedummydata", "somedummydata"])
         self.assertEqual(self.bdl.batch_size, 1)
-        self.assertEqual(self.bdl.validation_split, 0.5)
+        self.assertEqual(self.bdl.validation_split, 0.25)
+        self.assertEqual(self.bdl.test_split, 0.25)
 
     def test_read_batch(self):
         """
@@ -69,21 +71,24 @@ class TestBaseDataLoader(unittest.TestCase):
         #
         # set args for dataloader
         batch_size = 1
-        validation_split = 0.75
+        validation_split = 0.25
+        test_split = 0.25
         # create the corresponding dataloader for training and validation
         self.bdl = BaseDataLoader(dataset=unet_data,
                                      batch_size=batch_size,
                                      validation_split=validation_split,
+                                        test_split=test_split,
                                   shuffle_for_split=True,
                                   random_seed_split=0)
         # check the batch size
         self.assertEqual(self.bdl.batch_size, 1)
         # check the validation split
-        self.assertEqual(self.bdl.validation_split, 0.75)
+        self.assertEqual(self.bdl.validation_split, 0.25)
         # check the number of batches for validation
-        self.assertEqual(len(self.bdl.val_loader), 3)
+        self.assertEqual(len(self.bdl.val_loader), 1)
+        self.assertEqual(len(self.bdl.test_loader), 1)
         # check the number of batches for training
-        self.assertEqual(len(self.bdl.train_loader), 1)
+        self.assertEqual(len(self.bdl.train_loader), 2)
 
 
 
