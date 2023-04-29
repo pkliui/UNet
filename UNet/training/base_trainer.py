@@ -151,6 +151,13 @@ class BaseTrainer:
                 val_loss_values.append(avg_val_loss)
                 score_values.append(avg_score)
                 #
+                # add loss to writer for tensorboard visualization
+                self.writer.add_scalar('Loss/val', avg_val_loss, epoch)
+                self.writer.flush()
+                # add score to writer for tensorboard visualization
+                self.writer.add_scalar('Score/val', avg_score, epoch)
+                self.writer.flush()
+                #
                 # Early stopping
                 if self.early_stop_save_dir is not None:
                     # if the validation loss is better than the best one, save the model
