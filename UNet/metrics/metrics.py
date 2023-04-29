@@ -1,4 +1,6 @@
 import torch
+from sklearn.metrics import confusion_matrix
+import numpy as np
 
 def iou_tgs_challenge(outputs: torch.Tensor, labels: torch.Tensor):
     """
@@ -27,7 +29,7 @@ def iou_tgs_challenge(outputs: torch.Tensor, labels: torch.Tensor):
     return thresholded  #
 
 
-def iou(outputs: torch.Tensor, labels: torch.Tensor):
+def iou_metrics(outputs: torch.Tensor, labels: torch.Tensor):
     """
     IOU metrics without mapping, modified from
     https://www.kaggle.com/iezepov/fast-iou-scoring-metric-in-pytorch-and-numpy
@@ -51,11 +53,11 @@ def bce_loss(pos_weight: torch.Tensor = None):
     return torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
 
-def dice_coefficient(iou: torch.Tensor):
+def dice_coefficient(outputs: torch.Tensor, labels: torch.Tensor):
     """
     Computes the dice coefficient
     :param iou: Intersection over union
     :return: Dice coefficient
     """
+    iou = iou_metrics(outputs, labels)
     return 2 * iou / (iou + 1)
-
