@@ -1,6 +1,8 @@
 #import packages
 import sys
 import glob, os, fnmatch
+import subprocess
+import threading
 
 import torch.nn as nn
 import torch.optim as optim
@@ -13,12 +15,15 @@ from UNet.data_handling.unetdataset import UNetDataset
 from UNet.classes.preprocess import Resize
 from UNet.metrics.metrics import iou_tgs_challenge
 
+from UNet.evaluation.evaluation import evaluate_model
+from UNet.metrics.metrics import dice_coefficient
+
 
 # use cuda if available
 import torch
 
-from UNet.utils.augment import AugmentImageAndMask, random_transforms, get_augmented_tensors, \
-    get_augmented_images_and_masks
+from UNet.utils.augment import AugmentImageAndMask, random_transforms, get_augmented_tensors
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
@@ -31,8 +36,9 @@ SIZE_Y = (388, 388) # size of input segmented images
 LEARNING_RATE = 1e-1 # learning rate
 BATCH_SIZE = 1 # batch size
 VALIDATION_SPLIT = 0.25 # validation split
+TEST_SPLIT = 0.25 # test split
 
-MAX_EPOCHS = 2 # number of epochs
+MAX_EPOCHS = 1 # number of epochs
 
 SCHEDULER_STEP = 50 # scheduler step
 SCHEDULER_GAMMA = 0.1 # scheduler gamma
@@ -50,6 +56,7 @@ unet_dataset = UNetDataset(
 data_loader = BaseDataLoader(dataset=unet_dataset,
                              batch_size=BATCH_SIZE,
                              validation_split=VALIDATION_SPLIT,
+                             test_split=TEST_SPLIT
                              )
 
 # Define the model
@@ -76,7 +83,19 @@ basetrainer = BaseTrainer(model = unet_model,
                           early_stop_patience=EARLY_STOP_PATIENCE,
                           save_dir=DATAPATH)
 
+# call tensorboard
+log_dir = os.path.join(DATAPATH, 'summaries')
+
+def start_tensorboard(logdir):
+    subprocess.call(['tensorboard', '--logdir', logdir])
+
+tb_thread = threading.Thread(target=start_tensorboard, args=(log_dir,))
+tb_thread.start()
+
 # Start training
 train_loss_values, val_loss_values, avg_score_values = basetrainer.train()
+
+# Evaluate the model on the test set
+score, accuracy, precision, recall, F1_score, conf_matrix = evaluate_model(unet_model, data_loader.test_loader, device, dice_coefficient)
 
 
