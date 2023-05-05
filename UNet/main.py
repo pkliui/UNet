@@ -1,4 +1,5 @@
 #import packages
+import shutil
 import sys
 import glob, os, fnmatch
 import subprocess
@@ -13,10 +14,10 @@ from UNet.models.unet import UNet
 from UNet.training.base_trainer import BaseTrainer
 from UNet.data_handling.unetdataset import UNetDataset
 from UNet.classes.preprocess import Resize
-from UNet.metrics.metrics import iou_tgs_challenge
+from UNet.metric.metric import iou_tgs_challenge
 
 from UNet.evaluation.evaluation import evaluate_model
-from UNet.metrics.metrics import dice_coefficient
+from UNet.metric.metric import dice_coefficient
 
 
 # use cuda if available
@@ -30,6 +31,8 @@ print(device)
 
 # set parameters
 DATAPATH = os.path.abspath("/Users/Pavel/Documents/repos/UNet/docs/data/PH2_Dataset_images/")
+OUTPUT_DIR = "/Users/Pavel/Documents/repos/UNet/docs/output"
+
 SIZE_X = (572, 572) # size of input images
 SIZE_Y = (388, 388) # size of input segmented images
 
@@ -42,8 +45,15 @@ MAX_EPOCHS = 1 # number of epochs
 
 SCHEDULER_STEP = 50 # scheduler step
 SCHEDULER_GAMMA = 0.1 # scheduler gamma
-
 EARLY_STOP_PATIENCE = 2 # early stopping patience
+
+# make output directory to keep the model
+if os.path.isdir(OUTPUT_DIR):
+    shutil.rmtree(OUTPUT_DIR)
+    os.makedirs(OUTPUT_DIR)
+else:
+    os.makedirs(OUTPUT_DIR)
+
 
 unet_dataset = UNetDataset(
     root_dir=DATAPATH,
