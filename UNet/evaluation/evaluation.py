@@ -1,6 +1,7 @@
 """
 This module contains functions for evaluation of the model.
 """
+import warnings
 
 import torch
 import numpy as np
@@ -22,6 +23,7 @@ def evaluate_model(model, data_loader, device, metric):
         num_batches = len(data_loader)
         score = 0
         conf_matrix = np.zeros((2, 2), dtype=np.int32)
+        conf_matrices = []
 
         # Iterate through the dataset
         for i, batch in enumerate(data_loader):
@@ -47,30 +49,54 @@ def evaluate_model(model, data_loader, device, metric):
             predictions_np = predictions.cpu().detach().numpy()
             masks_np = masks.cpu().detach().numpy()
 
-            # Compute the confusion matrix
-            conf_matrix += confusion_matrix(masks_np.flatten(), predictions_np.flatten())
+            # Flatten predicted and true labels for each image in batch
+            #predictions_np_flat = predictions_np.reshape(num_batches, predictions_np.shape[-2]*predictions_np.shape[-1])
+            #masks_np_flat = masks_np.reshape(num_batches, masks_np.shape[-2]*masks_np.shape[-1])
 
-        # Compute TP, FP, TN, FN
-        TP = np.diag(conf_matrix)
-        FP = np.sum(conf_matrix, axis=0) - TP
-        FN = np.sum(conf_matrix, axis=1) - TP
-        TN = np.sum(conf_matrix) - (TP + FP + FN)
+            predictions_np_flat = predictions_np.flatten()
+            masks_np_flat = masks_np.flatten()
+
+            # Compute the confusion matrix
+            conf_matrix = confusion_matrix(masks_np_flat, predictions_np_flat)
+            print("conf matrix ", conf_matrix)
+            conf_matrices.append(conf_matrix)
+
+        avg_conf_matrix = np.mean(conf_matrices, axis=0)
+        TN, FP, FN, TP = avg_conf_matrix.ravel()
+
+        print("TP ", TP)
+        print("FP ", FP)
+        print("FN ", FN)
+        print("TN ", TN)
 
         # Compute accuracy, precision, recall and F1 score
-        accuracy = (TP + TN) / (TP + FP + FN + TN)
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        F1_score = 2 * (precision * recall) / (precision + recall)
+        if TP + FP + FN + TN != 0:
+            accuracy = (TP + TN) / (TP + FP + FN + TN)
+        else:
+            accuracy = 0
+            print("TP + FP + FN + TN = 0, setting accuracy to 0")
+        print("accuracy ", accuracy)
+        if TP + FP != 0:
+            precision = TP / (TP + FP)
+        else:
+            precision = 0
+            print("TP + FP = 0, setting precision to 0")
+        print("precision ", precision)
+        if TP + FN != 0:
+            recall = TP / (TP + FN)
+        else:
+            recall = 0
+            print("TP + FN = 0, setting recall to 0")
+        print("recall ", recall)
+        if precision + recall != 0:
+            F1_score = 2 * (precision * recall) / (precision + recall)
+        else:
+            F1_score = 0
+            print("precision + recall = 0, setting F1_score to 0")
+        print("F1 ", F1_score)
 
         # Compute the average dice score
         score /= num_batches
-
-        print("Confusion matrix: ")
-        print(conf_matrix)
-        print("Accuracy: ", accuracy)
-        print("Precision: ", precision)
-        print("Recall: ", recall)
-        print("F1 score: ", F1_score)
         print("Score: ", score)
 
-    return score, accuracy, precision, recall, F1_score, conf_matrix
+    return score, accuracy, precision, recall, F1_score, avg_conf_matrix
