@@ -1,6 +1,5 @@
 import torch
-from sklearn.metrics import confusion_matrix
-import numpy as np
+
 
 def iou_tgs_challenge(outputs: torch.Tensor, labels: torch.Tensor):
     """
