@@ -1,97 +1,81 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os, fnmatch
+import os
 from skimage.io import imread
-import numpy as np
+from pathlib import Path
 
 from UNet.classes.base import BaseDataset
-from UNet.data_handling import utils
+from typing import Optional, Callable, List
 
 """
-This class contains a class to read UNet data
+This class contains a class to read data for UNet-based segmentation
 """
 
 
 class UNetDataset(BaseDataset):
 
-    def __init__(self, root_dir=None, images_folder=None, masks_folder=None, extension=None, transform=None):
+    def __init__(self,
+                 transform: Optional[Callable],
+                 images_list: List[str],
+                 masks_list: List[str]):
         """
-        Initializes class to read images for UNet image segmentation
-        Assumes the following structure of files:
-            * root dir
-                * images
-                    * image_1.jpg (or any other format)
-                    * image 2.jpg
-                    ...
-                * masks
-                    * mask_1.jpg
-                    * mask_2.jpg
-                    ...
-                * may be some other directory or directories
-        ---
-        Args:
-        ---
-        root_dir: str
-            Directory with images_folder and masks_fodler
-        images_folder: str
-            Folder with images
-        masks_folder: str
-            Folder with masks
-        extension: str
-            Extension of images and masks
-        transform : callable, optional
-            Optional transform to be applied on a sample
-            Default: None
-        """
-        self.extension = extension
-        self.root_dir = root_dir
-        self.images_folder = images_folder
-        self.masks_folder = masks_folder
-        self.transform = transform
+        Initializes class to read images for UNet image segmentation into a dataset. Expects the full paths of images
+        and masks to be provided at initialization.
 
-        if os.path.exists(os.path.join(self.root_dir, self.images_folder)):
-            self.images_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir, self.images_folder), self.extension))
-        else:
-            raise ValueError("Invalid images_folder! It must be a valid directory!")
-        if os.path.exists(os.path.join(self.root_dir, self.masks_folder)):
-            self.masks_list = np.asarray(utils.list_files_in_dir(os.path.join(self.root_dir, self.masks_folder), self.extension))
-        else:
-            raise ValueError("Invalid masks_folder! It must be a valid directory!")
+        The file structure follows:
+        * root_dir
+            * sample1
+                * sample1_images_tag
+                    * sample1_optional_images_subtag.bmp
+                * sample1_masks_tag
+                    * sample1_optional_masks_subtag.bmp
+            * sample2
+                * sample2_images_tag
+                    * sample1_optional_images_subtag.bmp
+                * sample2_masks_tag
+                    * sample2_optional_masks_subtag.bmp
+
+        :param transform: Optional transform to be applied on a sample
+        :param images_list: List of full paths to images
+        :param masks_list: List of full paths to masks
+        """
+
+        self.transform = transform
+        self.images_list = images_list
+        self.masks_list = masks_list
 
     def __getitem__(self, item):
         """
-        Supports indexing such that dataset[i] can be used to get the i-th sample
-        Reads images and masks one by one
-        ---
-        Args:
-        ---
-        item: int
-            Index of the sample
-        ---
-        Returns:
-        ---
-        sample: dict
-            Dictionary with image and mask
+        Reads images and masks one-by-one by their index in the corresponding lists of paths
+        and returns them as a dictionary.
+
+        :param item: Since the paths to images and masks are saved in lists, the item parameter is an integer
+        representing the index of the element to be accessed.
+
+        :return sample: Dictionary with keys 'image' and 'mask' and respective
         """
-        # supported file types
-        filetypes = ["*.jpeg", "*.jpg", "*.bmp", "*.png"]
         #
         # read images and masks
-        if self.extension in (tuple(filetypes)):
-            image_name = self.images_list[item]
-            image = imread(os.path.join(self.root_dir, self.images_folder, image_name))
-            mask_name = self.masks_list[item]
-            mask = imread(os.path.join(self.root_dir, self.masks_folder, mask_name))
-            #mask = mask > 0.5
-            sample = {'image': image, 'mask': mask}
-            #
-            # transform if needed
-            if self.transform:
-                sample = self.transform(sample)
-        else:
-            raise ValueError("Invalid extension! It must be one of the following: {}".format(filetypes))
-        return sample
+        image = imread(self.images_list[item])
+        mask = imread(self.masks_list[item])
+        #
+        try:
+            # if grand-parent folder names are the same
+            self.images_parent_folder = Path(self.images_list[item]).parents[2]
+            self.masks_parent_folder = Path(self.masks_list[item]).parents[2]
+            if self.images_parent_folder == self.masks_parent_folder:
+                #
+                # save current image and mask into a dictionary
+                sample = {'image': image, 'mask': mask}
+                #
+                # transform if needed
+                if self.transform:
+                    sample = self.transform(sample)
+                return sample
+            else: ValueError()
+        except ValueError as e:
+            print(f"Parent folder of images {self.images_parent_folder} and"
+                  f"parent filder of masks {self.masks_parent_folder} are not the same! Skipping this dataset")
 
     def __len__(self):
-        assert len(self.images_list) == len(self.masks_list)
         return len(self.images_list)
