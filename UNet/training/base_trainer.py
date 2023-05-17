@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import torch
 import os
+
+import wandb
+
 from UNet.utils import augment
 from torch.utils.tensorboard import SummaryWriter
 
@@ -10,6 +13,8 @@ This module contains a base implementation for a trainer.
 It defines a training_step method, a validation_step method
 and a train method which consists of the main training loop.
 """
+
+
 
 class BaseTrainer:
     def __init__(self,
@@ -107,6 +112,7 @@ class BaseTrainer:
         """ Best validation loss for early stopping """
         self.writer = SummaryWriter(os.path.join(save_dir, 'summaries'))
 
+
     def train(self):
         """
         Training pipeline
@@ -120,27 +126,26 @@ class BaseTrainer:
         for epoch in range(1, self.n_epochs+1):
             print('* Epoch %d/%d' % (epoch , self.n_epochs))
             #
-            # initialization of loss values at the current epoch
+            # initialize loss for the current epoch
             accum_loss = 0
-            #
+            # go thru all batches
             for batch_index, batch in enumerate(self.train_loader):
-                # augment the batch
-                images_batch, masks_batch = augment.augment_batch(batch['image'], batch['mask'], self.device, prob=0.5)
-                # train the model on the current batch and accumulate loss over the batches
-                current_loss = self.training_step(images_batch, masks_batch)
+                # augment data
+                print("type batch['image']", type(batch['image']))
+                images, masks = augment.augment_batch(batch['image'], batch['mask'], prob=0.5)
+                if self.device is not None:
+                    images = images.to(self.device)
+                    masks = masks.to(self.device)
+                # train the model and accumulate losses from all batches trained at the current epoch
+                current_loss = self.training_step(images, masks)
                 accum_loss += current_loss
             #
-            # calculate an average train loss across all the batches
+            # calculate the average train loss at this epoch across all the batches
             average_loss = accum_loss / len(self.train_loader)
             if self.device is not None:
                 average_loss = average_loss.detach().cpu().numpy()
-                #average_loss = average_loss.cpu().numpy()
-            train_loss_values.append(average_loss)
-            #
-            # add loss to writer for tensorboard visualization
-            self.writer.add_scalar('Loss/train', average_loss, epoch)
+            self.writer.add_scalar('avg_loss/training', average_loss, epoch)
             self.writer.flush()
-#           #
             #
             # make a validation step
             if self.validate:
@@ -152,14 +157,14 @@ class BaseTrainer:
                 score_values.append(avg_score)
                 #
                 # add loss to writer for tensorboard visualization
-                self.writer.add_scalar('Loss/val', avg_val_loss, epoch)
+                self.writer.add_scalar('avg_loss/validation', avg_val_loss, epoch)
                 self.writer.flush()
                 # add score to writer for tensorboard visualization
-                self.writer.add_scalar('Score/val', avg_score, epoch)
+                self.writer.add_scalar('avg_score/validation', avg_score, epoch)
                 self.writer.flush()
                 #
                 # Early stopping
-                if self.early_stop_save_dir is not None:
+                if self.early_stop_save_dir is not None and os.path.exists(self.early_stop_save_dir):
                     # if the validation loss is better than the best one, save the model
                     if avg_val_loss < self.best_val_loss:
                         # set the best validation loss to the current one
@@ -167,9 +172,11 @@ class BaseTrainer:
                         # reset the patience counter
                         self.patience = 0
                         # save the model
+                        print("saving model ")
                         torch.save(self.model.state_dict(),
                                    os.path.join(self.early_stop_save_dir,
                                                 'model_state_dict.pth'))
+                        print("saved model ")
                     # if the validation loss is not better than the best one, increase the patience counter
                     else:
                         self.patience += 1
@@ -178,10 +185,16 @@ class BaseTrainer:
                         print(f"Validation loss did not improve for {self.early_stop_patience} epochs. "
                               f"Training stopped early.")
                         break
+                else:
+                    raise ValueError("Path to the output directory does not exist")
     #
             # make a scheduler step if required
+            print("schduler starting  ")
             if self.lr_sched is not None:
+                print("schduler starting  ")
                 self.lr_sched.step()
+                print("schduler finished  ")
+            print("schduler finished ")
         # load the best model if early stopping is triggered
         #
         #if self.early_stop_save_dir is not None:
@@ -216,29 +229,25 @@ class BaseTrainer:
         """
         Validation step for one epoch
         """
-        # set dropout and batch normalization layers to evaluation mode before running the inference
         self.model.eval()
         with torch.no_grad():
-            #
-            # initialization of loss values at the current epoch
+            # initialize loss values for the current epoch
             accum_loss = 0
             score = 0
             for batch in self.val_loader:
-                # augment the batch
-                inputs, labels = batch['image'], batch['mask']
-                inputs, labels = augment.reshape_batches(inputs, labels)
+                # only reshape
+                images, masks = augment.reshape_batches(batch['image'], batch['mask'])
                 #
                 # forward propagation
-                predictions = self.model(inputs)
-                predictions_2plot = torch.round(torch.sigmoid(predictions))
-                loss = self.loss_function(predictions, labels)
+                predictions = self.model(images)
+                loss = self.loss_function(predictions, masks)
                 accum_loss += loss
                 #
                 # calculate score
                 # temporarily replace by metric().mean without .item()
-                # because this leads to float has no attribute detach error
-                # see https://github.com/horovod/horovod/issues/852
-                score += self.metric(predictions_2plot.to(self.device), predictions.to(self.device)).mean()
+                # this leads to float has no attribute detach error, https://github.com/horovod/horovod/issues/852
+                score += self.metric(torch.round(torch.sigmoid(predictions)).to(self.device),
+                                     predictions.to(self.device)).mean()
             #
             # calculate an average loss and score across all the batches to show the user
             average_loss = accum_loss / len(self.val_loader)
