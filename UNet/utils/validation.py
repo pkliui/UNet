@@ -28,6 +28,9 @@ def validate_config_ph2data(config: dict):
         "checkpoint_num_to_keep": The number of checkpoints to keep on disk for this run. If a checkpoint is persisted
             to disk after there are already this many checkpoints, then an existing checkpoint will be deleted.
             If this is None then checkpoints will not be deleted. Must be >= 1.
+        "num_samples_tune":  Number of times to sample from the hyperparameter space.
+            If grid_search is provided as an argument, the grid will be repeated num_samples of times.
+            If this is -1, (virtually) infinite samples are generated until a stopping condition is met.
 
 
     :raises ValueError if input data types are not as expected
@@ -35,7 +38,7 @@ def validate_config_ph2data(config: dict):
 
     required_keys = ["experiment_name", "output_dir", "datapath", "learning_rate", "step_size", "gamma", "batch_size",
                      "n_epochs", "validation_split", "test_split", "metric", "metric_mode", "checkpoint_frequency",
-                     "checkpoint_num_to_keep"]
+                     "checkpoint_num_to_keep", "num_samples_tune"]
 
     for key in required_keys:
         if key not in config:
@@ -50,36 +53,27 @@ def validate_config_ph2data(config: dict):
     #
     if not os.path.isdir(config["datapath"]):
         raise ValueError(f"Datapath directory '{config['datapath']}' does not exist")
-
     #
-    if not (0 < config["learning_rate"] <= 1):
-        raise ValueError("learning_rate must be between 0 and 1")
+    if (not isinstance(config["learning_rate"], int)) and not (0 < config["learning_rate"] <= 1):
+        raise ValueError("learning_rate must be a float between 0 and 1")
 
-    if config["step_size"] <= 0:
+    if (not isinstance(config["step_size"], int)) and config["step_size"] <= 0:
         raise ValueError("step_size must be a positive integer")
 
     if not isinstance(config["gamma"], float):
         raise ValueError("gamma must be a float")
 
-    if not isinstance(config["batch_size"], int):
-        raise ValueError("batch_size must be an integer")
-    if config["batch_size"] <= 0:
+    if (not isinstance(config["batch_size"], int)) and config["batch_size"] <= 0:
         raise ValueError("batch_size must be a positive integer")
 
-    if not isinstance(config["n_epochs"], int):
-        raise ValueError("n_epochs must be an integer")
-    if config["n_epochs"] <= 0:
+    if (not isinstance(config["n_epochs"], int)) and config["n_epochs"] <= 0:
         raise ValueError("n_epochs must be a positive integer")
 
-    if not isinstance(config["validation_split"], float):
-        raise ValueError("validation_split must be a float")
-    if not (0 < config["validation_split"] < 1):
-        raise ValueError("validation_split must be between 0 and 1")
+    if (not isinstance(config["validation_split"], float)) and (0 < config["validation_split"] < 1):
+        raise ValueError("validation_split must be a float between 0 and 1")
 
-    if not isinstance(config["test_split"], float):
-        raise ValueError("test_split must be a float")
-    if not (0 < config["test_split"] < 1):
-        raise ValueError("test_split must be between 0 and 1")
+    if (not isinstance(config["test_split"], float)) and not (0 < config["test_split"] < 1):
+        raise ValueError("test_split must be a float between 0 and 1")
 
     if config["metric"] not in ["avg_val_loss", "avg_score"]:
         raise ValueError('metric_mode must be either "avg_val_loss", "avg_score"')
@@ -87,8 +81,11 @@ def validate_config_ph2data(config: dict):
     if config["metric_mode"] not in ["min", "max"]:
         raise ValueError("metric_mode must be either 'min' or 'max'")
 
-    if config["checkpoint_frequency"] < 0:
+    if (not isinstance(config["checkpoint_frequency"], int)) and config["checkpoint_frequency"] < 0:
         raise ValueError("checkpoint_frequency must be a non-negative integer")
 
-    if config["checkpoint_num_to_keep"] < 1:
+    if (not isinstance(config["checkpoint_num_to_keep"], int)) and config["checkpoint_num_to_keep"] < 1:
         raise ValueError("checkpoint_num_to_keep must be a positive integer")
+
+    if (not isinstance(config["num_samples_tune"], int)) and config["num_samples_tune"] < 1:
+        raise ValueError("num_samples_tune must be an integer >= 1")
