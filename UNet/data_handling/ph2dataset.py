@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from typing import Optional, Callable
 
 from UNet.data_handling.unetdataset import UNetDataset
-from typing import Optional, Callable, List
 from UNet.data_handling import utils
 
 
@@ -38,7 +38,8 @@ class PH2Dataset(UNetDataset):
 
         :param root_dir: root directory that contains folders with samples of data uniquely identifiable by their ID
         :param transform: optional, callable to transform the datasets prior to their use
-        :param images_lists
+
+        :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
         """
         # initialize to keep all paths to images and masks
         images_list = []
@@ -59,9 +60,11 @@ class PH2Dataset(UNetDataset):
 
     def __getitem__(self, item):
         """
-        get a sample of data
-        :param item:
-        :return:
+        Return a dictionary containing an image and a mask
+
+        :param item: The index or key used to access a specific sample of data from the dataset.
+        :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
+
         """
         sample = super().__getitem__(item)
 
