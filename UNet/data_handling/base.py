@@ -37,7 +37,8 @@ class BaseDataset(Dataset):
         to the inputs in the dataloading step.
         """
         return NotImplementedError("Transform not implemented")
-
+t
+t
 class BaseDataLoader:
     def __init__(self, dataset=None,
                  batch_size=None,
@@ -86,7 +87,7 @@ class BaseDataLoader:
         # case training/validation set val_split_size
         else:
             print("validation val_split_size = ", self.validation_split)
-            indices = np.arange(len(dataset))
+            indices = np.arange(len(datasett))
             # generate random indicies for val_split_size and test_split_size
             if shuffle_for_split is True:
                 # set random seed
