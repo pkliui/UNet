@@ -38,6 +38,8 @@ class UNetDataset(BaseDataset):
         :param transform: Optional transform to be applied on a sample
         :param images_list: List of full paths to images
         :param masks_list: List of full paths to masks
+
+        :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
         """
 
         self.transform = transform
@@ -52,7 +54,7 @@ class UNetDataset(BaseDataset):
         :param item: Since the paths to images and masks are saved in lists, the item parameter is an integer
         representing the index of the element to be accessed.
 
-        :return sample: Dictionary with keys 'image' and 'mask' and respective
+        :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
         """
         #
         # read images and masks
@@ -70,12 +72,21 @@ class UNetDataset(BaseDataset):
                 #
                 # transform if needed
                 if self.transform:
-                    sample = self.transform(sample)
+                    sample = self.transform_data(sample)
                 return sample
             else: ValueError()
         except ValueError as e:
             print(f"Parent folder of images {self.images_parent_folder} and"
                   f"parent filder of masks {self.masks_parent_folder} are not the same! Skipping this dataset")
+
+    def transform_data(self, sample: dict):
+        """
+        Transform input sample of data using provided transform
+        :param sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
+        :return: transformed image and mask dictionary
+        """
+        sample = self.transform(sample)
+        return sample
 
     def __len__(self):
         return len(self.images_list)
