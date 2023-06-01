@@ -27,22 +27,14 @@ class BaseDataset(Dataset):
         Override this function to define the specific data
         loading procedure for one specific item.
         A sample should be define as a dictionary with an
-        "Id" key, an "Input" key and optionally a ground label
-        identified by a "Label" key.
+        "image" key, a "mask" key.
         """
         return NotImplementedError("GetItem not implemented")
 
-    def transform_input(self):
+    def transform_data(self):
         """
         Override this function to define any pre-processing you want to apply
         to the inputs in the dataloading step.
-        """
-        return NotImplementedError("Transform not implemented")
-
-    def transform_label(self):
-        """
-        Override this function to define any pre-processing you want to apply
-        to the labels in the dataloading step.
         """
         return NotImplementedError("Transform not implemented")
 
@@ -54,13 +46,14 @@ class BaseDataLoader:
                  shuffle_for_split=True,
                  random_seed_split=42):
         """
-        Initializes the dataloader.
+        Initializes the dataloader to handle training, validation and testing data
+
         3 configuration are supported:
             *   dataset used for training only (validation_split = 0).
                 Only self.train_loader is initialized.
             *   dataset used for validation/testing only (validation_split = 1)
                 Only self.val_loader is initialized
-            *   dataset to be val_split_sizeted between validation and training
+            *   dataset to be split between validation and training
                 Both self.train_loader and self.val_loader are initialized
         :param dataset: Dataset to use for training/validation
         :param batch_size: Batch size to use for training/validation
@@ -96,18 +89,14 @@ class BaseDataLoader:
             indices = np.arange(len(dataset))
             # generate random indicies for val_split_size and test_split_size
             if shuffle_for_split is True:
+                # set random seed
                 np.random.seed(random_seed_split)
                 indices = np.random.permutation(indices)
-                print(indices)
             #
             # calculate sizes of train, validation, and test splits
             val_split_size = int(np.floor(validation_split * len(dataset)))
             test_split_size = int(np.floor(test_split * len(dataset)))
             train_split_size = len(dataset) - val_split_size - test_split_size
-
-            print("train_split_size ", train_split_size)
-            print("val_split_size", val_split_size)
-            print("test_split_size", test_split_size)
             #
             # check that the val_split_size is not too big or too small
             # specifically, check that the remaining smaller portion for train is not smaller than the batch size
@@ -118,7 +107,6 @@ class BaseDataLoader:
                 print("the val_split_size is just right  ")
             else:
                 raise ValueError("Decrease the batch size or change the validation val_split_size")
-
             #
             # check that the test_split_size is not too big or too small
             # specifically, check that the remaining smaller portion for train is not smaller than the batch size
@@ -139,9 +127,7 @@ class BaseDataLoader:
             val_sampler = SubsetRandomSampler(val_indices)
             test_sampler = SubsetRandomSampler(test_indices)
             #
-            # load date with data loaders
             # load data with data loaders
-            print("preparing train, val, and test loaders ... ")
             self.train_loader = DataLoader(self.dataset, self.batch_size, sampler=train_sampler)
             self.val_loader = DataLoader(self.dataset, self.batch_size, sampler=val_sampler)
             self.test_loader = DataLoader(self.dataset, self.batch_size, sampler=test_sampler)
