@@ -87,7 +87,7 @@ class BaseDataLoader:
         # case training/validation set val_split_size
         else:
             print("validation val_split_size = ", self.validation_split)
-            indices = np.arange(len(datasett))
+            indices = np.arange(len(dataset))
             # generate random indicies for val_split_size and test_split_size
             if shuffle_for_split is True:
                 # set random seed
