@@ -6,7 +6,8 @@ import torch
 import torch.testing
 from ddt import ddt
 
-from UNet.utils.sampling import zero_pad_masks, unpad_transformed_masks
+from UNet.utils.augment import AugmentImageAndMask
+from UNet.utils.sampling import zero_pad_masks, unpad_transformed_masks, reshape_batches
 
 
 @ddt
@@ -19,6 +20,31 @@ class TestSampling(unittest.TestCase):
     def tearDown(self):
         # remove temporary directory after the test
         shutil.rmtree(self.test_dir)
+
+    def test_reshape_batches(self):
+        """
+        check reshaping
+        """
+
+        batch_size = 2
+        height = 5
+        width = 5
+        images_batch = torch.tensor(np.random.rand(batch_size, height, width, 3))
+        masks_batch = torch.tensor(np.random.rand(batch_size, height, width, 1))
+
+        aug_im_and_mask = AugmentImageAndMask(
+            images_batch=images_batch,
+            masks_batch=masks_batch,
+            transforms_types=["RandomHorizontalFlip"],
+            prob=0.5)
+
+        images_reshaped, masks_reshaped = reshape_batches(images_batch, masks_batch)
+
+        # Check output shape and type
+        self.assertIsInstance(images_reshaped, torch.Tensor)
+        self.assertIsInstance(masks_reshaped, torch.Tensor)
+        self.assertEqual(images_reshaped.shape, (batch_size, 3, height, width))
+        self.assertEqual(masks_reshaped.shape, (batch_size, 1, height, width))
 
     def test_zero_pad_masks_odd_diff(self):
         """
@@ -252,3 +278,5 @@ class TestSampling(unittest.TestCase):
         mask_0 = unpad_transformed_masks(images_batch[0], mask_0_expected, masks_pad_batch[0])
 
         torch.testing.assert_allclose(mask_0, mask_0_expected)
+
+
