@@ -2,6 +2,48 @@
 
 import torch
 import numpy as np
+from typing import Tuple
+
+
+def reshape_batches(images_batch: torch.Tensor,
+                     masks_batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    reshapes batches of images and masks to the shape expected by the model
+
+    :param images_batch: a batch of images
+        Must be a torch.Tensor of shape (batch_size, 3, n_image, n_image) or (batch_size, n_image, n_image, 3)
+        Example: torch.tensor(np.random.rand(2, 32, 32, 3))
+    :param masks_batch: a batch of masks
+        Must be a torch.Tensor of shape (batch_size, 1, n_image, n_image) or (batch_size, n_image, n_image, 1)
+        Example: torch.tensor(np.random.rand(2, 32, 32, 1))
+    :return: a tuple of torch tensors
+         (torch.Tensor of shape (batch_size, 3, n_image, n_image), torch.Tensor of shape (batch_size, 1, n_image, n_image))
+    """
+
+    # turn to numpy to be able to manipulate the shape as shown below
+    images_batch = np.array(images_batch, np.float32)
+    masks_batch = np.array(masks_batch, np.float32)
+
+    if images_batch.shape[-1] == 3 or images_batch.shape[-1] == 1:
+        images_batch_reshaped = np.rollaxis(images_batch, 3, 1)
+    elif images_batch.shape[-3] == 3 or images_batch.shape[-3] == 1:
+        images_batch_reshaped = images_batch
+    else:
+        raise ValueError(
+            "Image's dimensions must be (batch_size, 3, n_image, n_image) or (batch_size, n_image, n_image, 3)"
+            "or (batch_size, 1, n_image, n_image) or (batch_size, n_image, n_image, 1)! "
+            "Current image's shape is {}".format(images_batch.shape))
+
+    if masks_batch.shape[-1] == 1:
+        masks_batch_reshaped = np.rollaxis(masks_batch, 3, 1)
+    elif masks_batch.shape[-3] == 1:
+        masks_batch_reshaped = masks_batch
+    else:
+        raise ValueError(
+            "Mask's dimensions must be (batch_size, 1, n_image, n_image) or (batch_size, n_image, n_image, 1)! "
+            "Current mask's shape is {}".format(masks_batch.shape))
+
+    return torch.from_numpy(images_batch_reshaped), torch.from_numpy(masks_batch_reshaped)
 
 
 def zero_pad_masks(image: torch.Tensor,
@@ -89,7 +131,7 @@ def unpad_transformed_masks(image: torch.Tensor,
         # if images and masks have the same sizes
         else:
             mask_transformed = mask_transformed_pad[1, :, :]
-        p#rint("RGB ")
+        #print("RGB ")
         #print("mask transformed ", mask_transformed)
     # if grayscale input images
     elif image.shape[0] == 1:
@@ -106,3 +148,4 @@ def unpad_transformed_masks(image: torch.Tensor,
     mask_transformed = mask_transformed[np.newaxis, :, :]
 
     return mask_transformed
+
