@@ -29,5 +29,4 @@ Contents
    dataset
    preprocessing
    training
-   setup_experiment
    validation
