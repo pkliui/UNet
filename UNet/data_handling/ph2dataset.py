@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 from UNet.data_handling.unetdataset import UNetDataset
 from UNet.data_handling import utils
@@ -32,12 +32,16 @@ class PH2Dataset(UNetDataset):
 
     def __init__(self,
                  root_dir: str,
-                 transform: Optional[Callable]):
+                 required_image_size: Tuple[int, int],
+                 required_mask_size: Tuple[int, int],
+                 resize_required: bool):
         """
         Initialize PH2Dataset class
 
         :param root_dir: root directory that contains folders with samples of data uniquely identifiable by their ID
-        :param transform: optional, callable to transform the datasets prior to their use
+        :param required_image_size: Image size as required by model
+        :param required_mask_size: Mask size as required by model
+        :param resize_required: If True, input images and masks will be resized
 
         :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively
         """
@@ -56,7 +60,7 @@ class PH2Dataset(UNetDataset):
             images_list = utils.get_list_of_data(images_folder, 'bmp', images_list)
             masks_list = utils.get_list_of_data(masks_folder, 'bmp',  masks_list)
 
-        super().__init__(transform, images_list, masks_list)
+        super().__init__(required_image_size, required_mask_size, images_list, masks_list, resize_required)
 
     def __getitem__(self, item):
         """
