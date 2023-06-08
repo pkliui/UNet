@@ -1,0 +1,469 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Pre-processing" href="preprocessing.html" /><link rel="prev" title="Examples" href="examples.html" />
+
+    <meta name="generator" content="sphinx-4.3.2, furo 2022.04.07"/>
+        <title>Dataset creation - unet-segmentation 1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">unet-segmentation 1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">unet-segmentation 1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Dataset creation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocessing.html">Pre-processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="training.html">Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="dataset-creation">
+<h1>Dataset creation<a class="headerlink" href="#dataset-creation" title="Permalink to this headline">#</a></h1>
+<p>The idea is that the framework serves as a research toolbox to train and run inference on medical image segmentation models. The toolbox supports inference on already pre-trained models as well as enables an easy creation of new models by inheriting from and configuring an existing architecture.</p>
+<p>Currently we are working on a model for dermatoscopic image segmentation trained on the PH2 dataset (see details below).</p>
+<p>This document describes the structure and format of data expected by the framework as well as general steps necessary to prepare this data for training and, ultimately, inference.</p>
+<section id="data">
+<h2>Data<a class="headerlink" href="#data" title="Permalink to this headline">#</a></h2>
+<section id="general-requirements">
+<h3>General requirements<a class="headerlink" href="#general-requirements" title="Permalink to this headline">#</a></h3>
+<p>Currently, the framework expects images and their segmented counterparts (i.e. labels) to be provided in the following format:</p>
+<ul class="simple">
+<li><p>Images are saved as png or bmp. For each <em>image</em> there is a corresponding <em>mask</em>.</p></li>
+<li><p>Following the UNet architecture, currently used to build our segmentation model, the sampling of images must be no less than 572x572 pixels and the sampling of masks no less than 388x388 pixels.</p></li>
+<li><p>The data can either be pre-processed by users and provided at the specified samplings or can be pre-processed by the framework prior to their use. It is planned to have a dedicated framewrok for dataset creation, inclusing any necessary processing steps.</p></li>
+<li><p>Each set of data has a unique identifier <em>sampleID</em> and resides in a separate folder with this particular ID name <em>sampleID</em>. The <em>sampleID</em> folder contains two other folders - one with an <em>image</em>, another with a respective <em>mask</em>:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>root_folder
+├── folder_with_images
+│    ├── sampleID1
+│    │    ├── sampleID1_image
+│    │    │    └── image1.bmp
+│    │    └── sampleID1_mask
+│    │         └── mask1.bmp
+│    ├── sampleID2
+│    │    ├── sampleID2_image
+│    │    │    └── image2.bmp
+│    │    └── sampleID2_mask
+│    │         └── mask2.bmp
+│    ├──...
+├── ...
+</pre></div>
+</div>
+</section>
+<section id="example-ph2-data">
+<h3>Example: PH2 Data<a class="headerlink" href="#example-ph2-data" title="Permalink to this headline">#</a></h3>
+<p>As a specific example, that is also used to build a dermatoscopic segmentation model in this framewrok, let us take the <code class="docutils literal notranslate"><span class="pre">PH2</span> <span class="pre">dermoscopic</span> <span class="pre">image</span> <span class="pre">database</span> <span class="pre">&lt;https://www.fc.up.pt/addi/ph2%20database.html&gt;</span></code> acquired at the Dermatology Service of Hospital Pedro Hispano, Matosinhos, Portugal. They are 8-bit RGB color images with a resolution of 768x560 pixels of lesions (we refer to them as <em>images</em>) and their segmentations available as binary masks (we refer to them as <em>masks</em>). In total the database comprises 200 datasets and corresponding files with metadata:</p>
+<ul class="simple">
+<li><p><em>PH2 Dataset images</em> folder contains the image data.</p></li>
+<li><p><em>PH2 Dataset.xlsx</em> file contains the classification of all images according to the dermoscopic criteria that are evaluated in the PH2 database.</p></li>
+<li><p><em>PH2 Dataset.txt</em> file contains the classification of all images according to the dermoscopic criteria that are evaluated in the PH2 database.</p></li>
+</ul>
+<p>For more details please refer to the original website. The file structure for PH2 segmentation follows the structure described in general requirements above:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PH2Dataset
+├── PH_Dataset_images
+│    ├── IMD002
+│    │    ├── IMD002_Dermoscopic_Image
+│    │    │    └── IMD002.bmp
+│    │    └── IMD002_lesion
+│    │         └── IMD002_lesion.bmp
+│    ├── IMD003
+│    │    ├── IMD003_Dermoscopic_Image
+│    │    │    └── IMD003.bmp
+│    │    └── IMD003_lesion
+│    │         └── IMD003_lesion.bmp
+│    ├──...
+├── PH2_dataset.txt
+└── PH2_dataset.xlsx
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>The data are resized to the expected number of pixels prior to their use in training as described in the further sections.</p></li>
+</ul>
+</section>
+</section>
+<section id="pytorch-datasets">
+<h2>Pytorch datasets<a class="headerlink" href="#pytorch-datasets" title="Permalink to this headline">#</a></h2>
+<p>Once the data are available, a new dataset class and a dataloader are required to read images and parse them to the model for training and testing.</p>
+<section id="unetdataset-class-to-read-images-and-masks-for-unet-based-segmentation">
+<h3>UNetDataset class to read images and masks for UNet-based segmentation<a class="headerlink" href="#unetdataset-class-to-read-images-and-masks-for-unet-based-segmentation" title="Permalink to this headline">#</a></h3>
+<p>As a template to create custom datasets for segmentation with the UNet, the framework provides the <code class="docutils literal notranslate"><span class="pre">UNet.UNet.data_handling.unetdataset.UNetDataset</span></code> class derived from the base <code class="docutils literal notranslate"><span class="pre">UNet.UNet.data_handling.base.BaseDataset</span></code> class.</p>
+<ul class="simple">
+<li><p>The UNetDataset class is a subclass of the BaseDataset class and is designed to read images and masks for the UNet-based image segmentation task. It takes a list of image paths and mask paths as input during initialization.</p></li>
+<li><p>It expects data to have the structure as for the PH2 dataset. When you access an instance of the UNetDataset class with an index using the <strong>getitem</strong> method, it reads the corresponding image and mask from the provided paths. It returns a dictionary with keys ‘image’ and ‘mask’, where the values are the loaded image and mask, respectively. Optionally, if a transform function is provided during initialization, it applies the transform on the sample before returning it.</p></li>
+<li><p>The class is initialized as follows:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="k">class</span> <span class="nc">UNetDataset</span><span class="p">(</span><span class="n">BaseDataset</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">required_image_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+                 <span class="n">required_mask_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+                 <span class="n">images_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                 <span class="n">masks_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                 <span class="n">resize_required</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Initializes class to read images for UNet image segmentation into a dataset. Expects the full paths of images</span>
+<span class="sd">        and masks to be provided at initialization.</span>
+
+<span class="sd">        The file structure follows:</span>
+<span class="sd">        * root_dir</span>
+<span class="sd">            * sample1</span>
+<span class="sd">                * sample1_images_tag</span>
+<span class="sd">                    * sample1_optional_images_subtag.bmp</span>
+<span class="sd">                * sample1_masks_tag</span>
+<span class="sd">                    * sample1_optional_masks_subtag.bmp</span>
+<span class="sd">            * sample2</span>
+<span class="sd">                * sample2_images_tag</span>
+<span class="sd">                    * sample1_optional_images_subtag.bmp</span>
+<span class="sd">                * sample2_masks_tag</span>
+<span class="sd">                    * sample2_optional_masks_subtag.bmp</span>
+
+<span class="sd">        :param required_image_size: Image size as required by model</span>
+<span class="sd">        :param required_mask_size: Mask size as required by model</span>
+<span class="sd">        :param images_list: List of full paths to images</span>
+<span class="sd">        :param masks_list: List of full paths to masks</span>
+<span class="sd">        :param resize_required: If True, input images and masks will be resized</span>
+
+<span class="sd">        :return sample: A dictionary with keys 'image' and 'mask' containing an image and a mask, respectively</span>
+<span class="sd">        """</span>
+
+</pre></div>
+</div>
+</section>
+<section id="creating-dataset-specific-classes-example-ph2dataset-class">
+<h3>Creating dataset-specific classes. Example: PH2Dataset class<a class="headerlink" href="#creating-dataset-specific-classes-example-ph2dataset-class" title="Permalink to this headline">#</a></h3>
+<p>Whilst UNetDataset class provides a generic template to work with data for UNet-based segmentation by reading and returning images and masks arranged under specific file structure, it requires a list of actual paths to these images and masks. Hence, for a new dataset one needs to create a new parent class that handles the dataset-specific namings in the file structure and, at this point, also any possible transformations.</p>
+<p>Specifically, for the PH2 dataset that has the following file structure</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>PH2Dataset
+├── PH_Dataset_images
+│    ├── IMD002
+│    │    ├── IMD002_Dermoscopic_Image
+│    │    │    └── IMD002.bmp
+│    │    └── IMD002_lesion
+│    │         └── IMD002_lesion.bmp
+│    ├── IMD003
+│    │    ├── IMD003_Dermoscopic_Image
+│    │    │    └── IMD003.bmp
+│    │    └── IMD003_lesion
+│    │         └── IMD003_lesion.bmp
+│    ├──...
+├── PH2_dataset.txt
+└── PH2_dataset.xlsx
+</pre></div>
+</div>
+<p>we create a new class, <code class="docutils literal notranslate"><span class="pre">UNet.UNet.data_handling.ph2dataset.PH2Dataset</span></code>, inheriting from <code class="docutils literal notranslate"><span class="pre">UNet.UNet.data_handling.unetdataset.UNetDataset</span></code>.</p>
+<ul class="simple">
+<li><p>The new class is specific to the PH2 data in a way that it sets names for expected images and masks folders, collects respective paths and sets a type of transform applied in the course of training.</p></li>
+<li><p>To make a new class instance, provide the root directory argument setting the path to data, e.g. “/PH2Dataset/PH_Dataset_images/” for the example above and required sizes of images and masks as a tuple, e.g. <code class="docutils literal notranslate"><span class="pre">(578,</span> <span class="pre">578)</span></code>  to make sure they have shapes expected by the model. In future, we plan to introduce a separate class to pre-process images prior to training. Currently, the images are resized using <code class="docutils literal notranslate"><span class="pre">ResizeData</span></code> class upon their read-out from the disk in <code class="docutils literal notranslate"><span class="pre">UNetDataset</span></code>.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">UNet.data_handling.ph2dataset</span> <span class="kn">import</span> <span class="n">PH2Dataset</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span> <span class="o">=</span> <span class="n">PH2Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapath</span><span class="p">,</span>
+                                <span class="n">required_image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size_images</span><span class="p">,</span>
+                                <span class="n">required_mask_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size_masks</span><span class="p">,</span>
+                                <span class="n">resize_required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pytorch-dataloaders">
+<h2>Pytorch dataloaders<a class="headerlink" href="#pytorch-dataloaders" title="Permalink to this headline">#</a></h2>
+<p>Dataloaders provide functionality for initializing and managing data for training, validation, and testing.</p>
+<section id="basedataloader-class">
+<h3>BaseDataLoader class<a class="headerlink" href="#basedataloader-class" title="Permalink to this headline">#</a></h3>
+<p>The base<code class="docutils literal notranslate"><span class="pre">UNet.UNet.data_handling.base.BaseDataLoader</span></code> class provides functionality to make custom dataloaders from your data.</p>
+</section>
+<section id="example-ph2-dataloader">
+<h3>Example: PH2 dataloader<a class="headerlink" href="#example-ph2-dataloader" title="Permalink to this headline">#</a></h3>
+<ul class="simple">
+<li><p>Given PH2 dataset obtained as above, we can now create a respective dataloader</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">UNet.data_handling.base</span> <span class="kn">import</span> <span class="n">BaseDataLoader</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">BaseDataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">,</span>
+                                    <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                                    <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                                    <span class="n">test_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                                    <span class="n">shuffle_for_split</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">random_seed_split</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In here, the batch size is set to 10 images and the data are split randomly (with prior shuffling) 20% for validation, 10% for testing and the remaining 70% for training (the latter not specified). The random seed split is set to 42 for reproducibility purposes.</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="preprocessing.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Pre-processing</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="examples.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Examples</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; Pavel Kliuiev
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Dataset creation</a><ul>
+<li><a class="reference internal" href="#data">Data</a><ul>
+<li><a class="reference internal" href="#general-requirements">General requirements</a></li>
+<li><a class="reference internal" href="#example-ph2-data">Example: PH2 Data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pytorch-datasets">Pytorch datasets</a><ul>
+<li><a class="reference internal" href="#unetdataset-class-to-read-images-and-masks-for-unet-based-segmentation">UNetDataset class to read images and masks for UNet-based segmentation</a></li>
+<li><a class="reference internal" href="#creating-dataset-specific-classes-example-ph2dataset-class">Creating dataset-specific classes. Example: PH2Dataset class</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pytorch-dataloaders">Pytorch dataloaders</a><ul>
+<li><a class="reference internal" href="#basedataloader-class">BaseDataLoader class</a></li>
+<li><a class="reference internal" href="#example-ph2-dataloader">Example: PH2 dataloader</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    </body>
+</html>
