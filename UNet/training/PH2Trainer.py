@@ -3,7 +3,6 @@ import os
 from UNet.data_handling.base import BaseDataLoader
 from UNet.data_handling.ph2dataset import PH2Dataset
 from UNet.training.base_trainer import BaseTrainer
-from UNet.classes.preprocess import Resize
 from UNet.metric.metric import iou_tgs_challenge
 import torch.optim as optim
 import torch
@@ -15,7 +14,7 @@ from UNet.models.unet import UNet
 from UNet.utils.validation import validate_config_ph2data
 
 
-class PH2Trainer2(tune.Trainable):
+class PH2Trainer(tune.Trainable):
 
     def setup(self, config: dict):
         """
@@ -90,8 +89,10 @@ class PH2Trainer2(tune.Trainable):
         #
         # create dataset for training, validation and testing
         self.ph2_dataset = PH2Dataset(root_dir=self.datapath,
-                                      transform=nn.Sequential(Resize(self.size_images, self.size_masks)))
-        #
+                                      required_image_size=self.size_images,
+                                      required_mask_size=self.size_masks,
+                                      resize_required=True)
+        print("self.ph2_dataset   ", self.ph2_dataset)
         # Create dataloader
         if len(self.ph2_dataset) > 0:
             self.data_loader = BaseDataLoader(dataset=self.ph2_dataset,
