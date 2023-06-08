@@ -1,6 +1,35 @@
 """This module contains functions for validation fo input config files"""
 
 import os
+import torch
+from typing import List
+
+
+def validate_runner_inputs(config_file_path,
+                           model_trainer_name,
+                           model_config_name):
+    """
+    Validate inputs to Runner class
+
+    Currently Runner class supports only PH2 data, hence the validation values in here
+
+    :param config_file_path: Path to a config file for this particular experiment, given model and data,
+        specifying paths to data, model hyperparameters, etc.
+    :param model_trainer_name: Name of a trainer class specific to this particular experiment, given model and data
+    :param model_config_name: optional. Name of a model configuration class in case a pre-trained model
+          available for this specific type of data. If it is not None,
+          then it overrides any variables set in config_file_path and model_trainer_name
+    """
+
+    if not os.path.exists(config_file_path):
+        raise ValueError(f"Path to config file {config_file_path} does not exist.")
+
+    model_trainer_names = ["PH2Trainer"]
+    if model_trainer_name not in model_trainer_names:
+        raise ValueError(f'Please enter valid model trainer name. Currently supported values are {model_trainer_names}')
+
+    # no model ready yet
+    # model_config_name
 
 
 def validate_config_ph2data(config: dict):
@@ -89,3 +118,5 @@ def validate_config_ph2data(config: dict):
 
     if (not isinstance(config["num_samples_tune"], int)) and config["num_samples_tune"] < 1:
         raise ValueError("num_samples_tune must be an integer >= 1")
+
+
