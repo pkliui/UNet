@@ -42,8 +42,8 @@ class BaseDataset(Dataset):
 class BaseDataLoader:
     def __init__(self, dataset=None,
                  batch_size=None,
-                 validation_split=None,
-                 test_split=None,
+                 validation_split=0,
+                 test_split=0,
                  shuffle_for_split=True,
                  random_seed_split=42):
         """
@@ -98,6 +98,9 @@ class BaseDataLoader:
             val_split_size = int(np.floor(validation_split * len(dataset)))
             test_split_size = int(np.floor(test_split * len(dataset)))
             train_split_size = len(dataset) - val_split_size - test_split_size
+            print("val_split_size ", val_split_size)
+            print("test_split_size ", test_split_size)
+            print("train_split_size ", train_split_size)
             #
             # check that the val_split_size is not too big or too small
             # specifically, check that the remaining smaller portion for train is not smaller than the batch size
@@ -114,8 +117,10 @@ class BaseDataLoader:
             if test_split >= 0.5 and (len(dataset) - val_split_size - test_split_size >= self.batch_size):
                 print("the remaining train split size is just right ")
             # specifically, check that the test_split_size is not smaller than the batch size
-            elif test_split < 0.5 and (test_split_size >= self.batch_size):
+            elif (test_split > 0) and (test_split < 0.5) and (test_split_size >= self.batch_size):
                 print("the test_split_size is just right  ")
+            elif test_split == 0:
+                pass
             else:
                 raise ValueError("Decrease the batch size or change the test test_split_size")
 
