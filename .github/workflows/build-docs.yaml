@@ -13,7 +13,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8.10 #updated version to be a string
+          python-version: 3.8.10 
       - name: Install dependencies
         run: |
           pip install myst_parser
@@ -27,7 +27,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
-          publish_branch: main
+          publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html
           force_orphan: true
