@@ -1,0 +1,5 @@
+python==3.6 # for sphinx to work
+furo
+myst_parser
+sphinx==4.0 # for furo to work
+sphinx-togglebutton
