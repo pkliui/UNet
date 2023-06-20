@@ -13,7 +13,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.6
+          python-version: 3.6.13
       - name: Install dependencies
         run: |
           pip install myst_parser

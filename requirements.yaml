@@ -1,0 +1,21 @@
+# run: conda env create --file environment.yml
+name: unet-env-test
+channels:
+- defaults
+- conda-forge
+dependencies:
+#- ddt
+#- markdown
+#- pandas
+#- pillow
+- pip
+- python==3.6.13 # for sphinx to work
+#- pytorch
+#- tensorboard
+#- yaml
+- pip:
+  - furo
+  - myst_parser
+  #- ray
+  - sphinx==4.0 # for furo to work
+  - sphinx-togglebutton
