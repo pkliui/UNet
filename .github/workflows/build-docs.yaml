@@ -7,13 +7,13 @@ on:
 
 jobs:
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6.14 #updated version to be a string
+          python-version: 3.8.10 #updated version to be a string
       - name: Install dependencies
         run: |
           pip install myst_parser
