@@ -13,7 +13,7 @@ git clone https://github.com/pkliui/UNet/
 cd UNet
 ```
 
-* The code code in python was edited using [PyCharm 2023.1.1 Community Edition](<https://www.jetbrains.com/pycharm/download/#section=mac>).
+* The code code in python was edited using PyCharm 2023.1.1 Community Edition
 
 
 ## Set up conda
