@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v3.6
+      - name: Set up python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.6
       - name: Install dependencies
         run: |
           pip install myst_parser
