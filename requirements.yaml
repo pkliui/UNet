@@ -9,12 +9,12 @@ dependencies:
 #- pandas
 #- pillow
 - pip
-- python==3.6.13 # for sphinx to work
+- python==3.8.10 # for sphinx to work 3.6.13
 #- pytorch
 #- tensorboard
 #- yaml
 - pip:
-  - furo
+  - furo==2022.9.29
   - myst_parser
   #- ray
   - sphinx==4.0 # for furo to work
