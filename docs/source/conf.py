@@ -27,12 +27,6 @@ release = '1.0'
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions = [
-]
-
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -42,10 +36,11 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'furo'
+html_theme = 'furo'
+import furo
 
 # simply add the extension to your list of extensions
-extensions = ['myst_parser', "sphinx_togglebutton",]
+extensions = ['myst_parser', "sphinx_togglebutton"]
 
 source_suffix = {
     '.rst': 'restructuredtext',
