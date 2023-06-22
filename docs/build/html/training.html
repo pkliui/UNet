@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Validation" href="validation.html" /><link rel="prev" title="Pre-processing" href="preprocessing.html" />
 
-    <meta name="generator" content="sphinx-4.0.0, furo 2022.04.07"/>
+    <meta name="generator" content="sphinx-4.0.0, furo 2022.09.29"/>
         <title>Training - unet-segmentation 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
@@ -180,7 +180,9 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -194,7 +196,7 @@
           </label>
         </div>
         <article role="main">
-          <section class="tex2jax_ignore mathjax_ignore" id="training">
+          <section id="training">
 <h1>Training<a class="headerlink" href="#training" title="Permalink to this headline">#</a></h1>
 <section id="basetrainer">
 <h2>BaseTrainer<a class="headerlink" href="#basetrainer" title="Permalink to this headline">#</a></h2>
@@ -237,82 +239,82 @@
 <span class="k">class</span> <span class="nc">PH2Trainer</span><span class="p">(</span><span class="n">tune</span><span class="o">.</span><span class="n">Trainable</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load model hyperparameters and other inputs from config file,</span>
 <span class="sd">        load data and create dataloaders</span>
 
 <span class="sd">        :param config: A dictionary of hyperparameters to search amongst.</span>
 
 <span class="sd">            Required fields are</span>
-<span class="sd">            "experiment_name", "output_dir", "datapath", "learning_rate",</span>
-<span class="sd">            "step_size", "gamma", "batch_size", "n_epochs",</span>
-<span class="sd">            "validation_split", "test_split"</span>
+<span class="sd">            &quot;experiment_name&quot;, &quot;output_dir&quot;, &quot;datapath&quot;, &quot;learning_rate&quot;,</span>
+<span class="sd">            &quot;step_size&quot;, &quot;gamma&quot;, &quot;batch_size&quot;, &quot;n_epochs&quot;,</span>
+<span class="sd">            &quot;validation_split&quot;, &quot;test_split&quot;</span>
 
 <span class="sd">            Example:</span>
-<span class="sd">            config = {"experiment_name": "ph2_test",</span>
-<span class="sd">              "output_dir": "/Users/Pavel/ray_results/",</span>
-<span class="sd">              "datapath": "/Users/Pavel/Documents/repos_data/UNet/PH2_Dataset_images/PH22/",</span>
-<span class="sd">              "learning_rate": tune.choice([1e-1, 2e-1]),</span>
-<span class="sd">              "step_size": 1,</span>
-<span class="sd">              "gamma": 0.1,</span>
-<span class="sd">              "batch_size": tune.choice([1, 2]),</span>
-<span class="sd">              "n_epochs": 2,</span>
-<span class="sd">              "validation_split": 0.25,</span>
-<span class="sd">              "test_split": 0.25}</span>
-<span class="sd">        """</span>
+<span class="sd">            config = {&quot;experiment_name&quot;: &quot;ph2_test&quot;,</span>
+<span class="sd">              &quot;output_dir&quot;: &quot;/Users/Pavel/ray_results/&quot;,</span>
+<span class="sd">              &quot;datapath&quot;: &quot;/Users/Pavel/Documents/repos_data/UNet/PH2_Dataset_images/PH22/&quot;,</span>
+<span class="sd">              &quot;learning_rate&quot;: tune.choice([1e-1, 2e-1]),</span>
+<span class="sd">              &quot;step_size&quot;: 1,</span>
+<span class="sd">              &quot;gamma&quot;: 0.1,</span>
+<span class="sd">              &quot;batch_size&quot;: tune.choice([1, 2]),</span>
+<span class="sd">              &quot;n_epochs&quot;: 2,</span>
+<span class="sd">              &quot;validation_split&quot;: 0.25,</span>
+<span class="sd">              &quot;test_split&quot;: 0.25}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># validate inputs</span>
         <span class="n">validate_config_ph2data</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">experiment_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"experiment_name"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""str: name of experiment, will be used as folder name to save results under output_dir"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">make_directory</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">"output_dir"</span><span class="p">])</span>
-<span class="w">        </span><span class="sd">"""str: full path to a directory to save results"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datapath</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"datapath"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""str: full path to a directory with data"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"learning_rate"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""float: learning rate"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">step_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"step_size"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""int: step size for learning rate decay, in epochs"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"gamma"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""float: learning rate decay rate"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"batch_size"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""int: image batch size to be processed at single epoch"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"n_epochs"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""int: number of epochs"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validation_split</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"validation_split"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""float: fraction of data to be used for validation, float between 0 and 1"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">test_split</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">"test_split"</span><span class="p">]</span>
-<span class="w">        </span><span class="sd">"""float: fraction of data to be used for testing, float between 0 and 1"""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experiment_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiment_name&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: name of experiment, will be used as folder name to save results under output_dir&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">make_directory</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_dir&quot;</span><span class="p">])</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: full path to a directory to save results&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datapath</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;datapath&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: full path to a directory with data&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;float: learning rate&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;step_size&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: step size for learning rate decay, in epochs&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;float: learning rate decay rate&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;batch_size&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: image batch size to be processed at single epoch&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;n_epochs&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: number of epochs&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validation_split</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;validation_split&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;float: fraction of data to be used for validation, float between 0 and 1&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_split</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;test_split&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;float: fraction of data to be used for testing, float between 0 and 1&quot;&quot;&quot;</span>
 
         <span class="c1"># other model-specific hyperparameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">early_stop_patience</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="w">        </span><span class="sd">"""int: early stop patience, in epochs"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: early stop patience, in epochs&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">size_images</span> <span class="o">=</span> <span class="p">(</span><span class="mi">572</span><span class="p">,</span> <span class="mi">572</span><span class="p">)</span>
-<span class="w">        </span><span class="sd">"""tuple of int: size of input images"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;tuple of int: size of input images&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">size_masks</span> <span class="o">=</span> <span class="p">(</span><span class="mi">388</span><span class="p">,</span> <span class="mi">388</span><span class="p">)</span>
-<span class="w">        </span><span class="sd">"""tuple of int: size of input segmented images"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;tuple of int: size of input segmented images&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">()</span>
-<span class="w">        </span><span class="sd">"""model to train on the PH2 data, original UNet model for now"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;model to train on the PH2 data, original UNet model for now&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_function</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">()</span>
-<span class="w">        </span><span class="sd">"""loss function"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;loss function&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
                                      <span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
-<span class="w">        </span><span class="sd">"""optimizer"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;optimizer&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lr_sched</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">lr_scheduler</span><span class="o">.</span><span class="n">StepLR</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span>
                                                   <span class="n">step_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
                                                   <span class="n">gamma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
-<span class="w">        </span><span class="sd">"""learning rate scheduler"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;learning rate scheduler&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">iou_tgs_challenge</span>
-<span class="w">        </span><span class="sd">"""metric"""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">'cuda'</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">'cpu'</span><span class="p">)</span>
-<span class="w">        </span><span class="sd">"""torch device"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;metric&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;torch device&quot;&quot;&quot;</span>
         <span class="c1">#</span>
         <span class="c1"># create dataset for training, validation and testing</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span> <span class="o">=</span> <span class="n">PH2Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapath</span><span class="p">,</span>
                                       <span class="n">required_image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size_images</span><span class="p">,</span>
                                       <span class="n">required_mask_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size_masks</span><span class="p">,</span>
                                       <span class="n">resize_required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"self.ph2_dataset   "</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;self.ph2_dataset   &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">)</span>
         <span class="c1"># Create dataloader</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">BaseDataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">,</span>
@@ -321,8 +323,8 @@
                                               <span class="n">test_split</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">test_split</span><span class="p">,</span>
                                               <span class="n">random_seed_split</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset is empty, check the folder </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="si">}</span><span class="s2"> "</span>
-                             <span class="sa">f</span><span class="s2">"has images and they are read correctly len(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="si">}</span><span class="s2">)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset is empty, check the folder </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="si">}</span><span class="s2"> &quot;</span>
+                             <span class="sa">f</span><span class="s2">&quot;has images and they are read correctly len(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="si">}</span><span class="s2">)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ph2_dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">basetrainer</span> <span class="o">=</span> <span class="n">BaseTrainer</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
                                   <span class="n">loss_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_function</span><span class="p">,</span>
@@ -339,21 +341,21 @@
 
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Train the model using Base Trainer</span>
 
 <span class="sd">        :return results_dict: dictionary as per BaseTrainer documentation</span>
-<span class="sd">        """</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">results_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basetrainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">results_dict</span>
 
     <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tmp_checkpoint_dir</span><span class="p">):</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_checkpoint_dir</span><span class="p">,</span> <span class="s2">"model.pth"</span><span class="p">)</span>
+        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_checkpoint_dir</span><span class="p">,</span> <span class="s2">&quot;model.pth&quot;</span><span class="p">)</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">checkpoint_path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">tmp_checkpoint_dir</span>
 
     <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tmp_checkpoint_dir</span><span class="p">):</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_checkpoint_dir</span><span class="p">,</span> <span class="s2">"model.pth"</span><span class="p">)</span>
+        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_checkpoint_dir</span><span class="p">,</span> <span class="s2">&quot;model.pth&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">))</span>
 
 
@@ -374,10 +376,10 @@
                 </div>
                 <div class="title">Validation</div>
               </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
           <a class="prev-page" href="preprocessing.html">
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
@@ -413,7 +415,7 @@
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
-            Contents
+            On this page
           </span>
         </div>
         <div class="toc-tree-container">

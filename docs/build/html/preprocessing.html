@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Training" href="training.html" /><link rel="prev" title="Dataset creation" href="dataset.html" />
 
-    <meta name="generator" content="sphinx-4.0.0, furo 2022.04.07"/>
+    <meta name="generator" content="sphinx-4.0.0, furo 2022.09.29"/>
         <title>Pre-processing - unet-segmentation 1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
@@ -180,7 +180,9 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -194,44 +196,44 @@
           </label>
         </div>
         <article role="main">
-          <section class="tex2jax_ignore mathjax_ignore" id="pre-processing">
+          <section id="pre-processing">
 <h1>Pre-processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">#</a></h1>
 <p>Images and masks are pre-processed in a few ways prior to their use in the framework.</p>
 <section id="resizing">
 <h2>Resizing<a class="headerlink" href="#resizing" title="Permalink to this headline">#</a></h2>
 <p>Resizing is done using the <code class="docutils literal notranslate"><span class="pre">UNet.utils.resize_data.ResizeData</span></code> class.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ResizeData</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class to resize images and masks and normalize pixel values to 1</span>
-<span class="sd">    """</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">new_image_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
                  <span class="n">new_mask_size</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">"""</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param new_image_size: New output image size specified as tuple of 2 integers (no channel size)</span>
 <span class="sd">            Example: (572, 572)</span>
 <span class="sd">        :param new_mask_size: New output mask size specified as tuple of 2 integers (no channel size)</span>
 <span class="sd">            Example: (388, 388)</span>
-<span class="sd">        """</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 </pre></div>
 </div>
 <p>Required image and mask sizes can be parsed as tuples of shape 2, i.e. <code class="docutils literal notranslate"><span class="pre">(572,</span> <span class="pre">572)</span></code> for UNet images and data should be provided as a dictionary to the return of Sequential container as follows, for example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resizer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">ResizeData</span><span class="p">((</span><span class="mi">572</span><span class="p">,</span> <span class="mi">572</span><span class="p">)),</span> <span class="p">(</span><span class="mi">388</span><span class="p">,</span> <span class="mi">388</span><span class="p">))</span>
-<span class="p">{</span><span class="s1">'image'</span><span class="p">:</span> <span class="n">RESIZED_IMAGE</span><span class="p">,</span> <span class="s1">'mask'</span><span class="p">:</span> <span class="n">RESIZED_MASK</span><span class="p">}</span> <span class="o">=</span> <span class="n">resizer</span><span class="p">({</span><span class="s1">'image'</span><span class="p">:</span> <span class="n">YOUR_IMAGE_DATA</span><span class="p">,</span> <span class="s1">'mask'</span><span class="p">:</span> <span class="n">YOUR_MASK_DATA</span><span class="p">})</span>
+<span class="p">{</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">RESIZED_IMAGE</span><span class="p">,</span> <span class="s1">&#39;mask&#39;</span><span class="p">:</span> <span class="n">RESIZED_MASK</span><span class="p">}</span> <span class="o">=</span> <span class="n">resizer</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">YOUR_IMAGE_DATA</span><span class="p">,</span> <span class="s1">&#39;mask&#39;</span><span class="p">:</span> <span class="n">YOUR_MASK_DATA</span><span class="p">})</span>
 </pre></div>
 </div>
 </section>
 <section id="augmentation">
 <h2>Augmentation<a class="headerlink" href="#augmentation" title="Permalink to this headline">#</a></h2>
 <p>Images and masks are augmented prior to their use in training using <code class="docutils literal notranslate"><span class="pre">UNet.utils.augment.AugmentImageAndMask</span></code> class by providing respective batches, transformation types to be applied and transformation probability. The augmentation is currently done on the batch level, i.e. the class requires batches as input and it happens in the <code class="docutils literal notranslate"><span class="pre">BaseTrainer</span></code>’s  training loop.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">,</span> <span class="n">masks</span> <span class="o">=</span> <span class="n">AugmentBatch</span><span class="p">(</span><span class="n">images_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s1">'image'</span><span class="p">],</span>
-                                             <span class="n">masks_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s1">'mask'</span><span class="p">],</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">images</span><span class="p">,</span> <span class="n">masks</span> <span class="o">=</span> <span class="n">AugmentBatch</span><span class="p">(</span><span class="n">images_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;image&#39;</span><span class="p">],</span>
+                                             <span class="n">masks_batch</span><span class="o">=</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;mask&#39;</span><span class="p">],</span>
                                              <span class="n">transforms_types</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transforms_types</span><span class="p">,</span>
                                              <span class="n">prob</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prob</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Transform types must be compliant with one of the currently implemented transforms <code class="docutils literal notranslate"><span class="pre">["RandomHorizontalFlip"</span> <span class="pre">"RandomVerticalFlip"]</span></code>. See more information in the docstrings of the class.</p>
+<p>Transform types must be compliant with one of the currently implemented transforms <code class="docutils literal notranslate"><span class="pre">[&quot;RandomHorizontalFlip&quot;</span> <span class="pre">&quot;RandomVerticalFlip&quot;]</span></code>. See more information in the docstrings of the class.</p>
 </section>
 </section>
 
@@ -247,10 +249,10 @@
                 </div>
                 <div class="title">Training</div>
               </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
           <a class="prev-page" href="dataset.html">
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
@@ -286,7 +288,7 @@
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
-            Contents
+            On this page
           </span>
         </div>
         <div class="toc-tree-container">
