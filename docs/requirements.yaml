@@ -1,5 +1,5 @@
-python==3.6.13 # for sphinx to work
-furo
+python==3.8.10 # for sphinx to work
+furo==2022.9.29
 myst_parser
 sphinx==4.0 # for furo to work
 sphinx-togglebutton
