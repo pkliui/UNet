@@ -7,7 +7,7 @@ import torch.nn as nn
 import numpy as np
 
 from UNet.classes.base import BaseDataset
-from typing import Optional, Callable, List, Tuple
+from typing import List, Tuple
 
 from UNet.utils.resize_data import ResizeData
 
@@ -73,44 +73,23 @@ class UNetDataset(BaseDataset):
 
         # perhaps move to validation whilst resizing
         if len(mask.shape) == 2:
-            mask = mask[:,:, np.newaxis]  # add dimension 1 to  mask images
-
-        print("unetdataset image shape ", image.shape)
-        print("unetdataset mask shape ", mask.shape)
+            mask = mask[:, :, np.newaxis]  # add dimension 1 to  mask images
         #
-        #try:
         # if grand-parent folder names are the same
         self.images_parent_folder = os.path.normpath(Path(self.images_list[item]).parents[1]).encode('utf-8')
         self.masks_parent_folder = os.path.normpath(Path(self.masks_list[item]).parents[1]).encode('utf-8')
-        #if os.path.normpath(self.images_parent_folder) == os.path.normpath(self.masks_parent_folder):
-
-        print(self.masks_list[item])
 
         if os.path.abspath(self.images_parent_folder) == os.path.abspath(self.masks_parent_folder):
-            print("paths are euql ")
-            #
             # save current image and mask into a dictionary
             sample = {'image': image, 'mask': mask}
             #
             # resize
             if self.resize_required is True:
-                print(sample)
-                print(type(sample["image"]))
                 sample = self.resize_sample(sample)
-
-                print(sample)
-                print(type(sample["image"]))
-
-                print("unetdataset image shape after transform - resize ", sample["image"].shape)
-                print("unetdataset mask shape after transform - resize ", sample["mask"].shape)
             return sample
         else:
-            print("paths are NOT  euql ")
             ValueError(f"Parent folder of images {self.images_parent_folder} and"
-              f"parent filder of masks {self.masks_parent_folder} are not the same! Skipping this dataset")
-        #except ValueError as e:
-        #    print(f"Exception ! Parent folder of images {self.images_parent_folder} and"
-        #          f"parent filder of masks {self.masks_parent_folder} are not the same! Skipping this dataset")
+                       f"parent folder of masks {self.masks_parent_folder} are not the same! Skipping this dataset")
 
     def resize_sample(self, sample: dict) -> dict:
         """
@@ -123,4 +102,3 @@ class UNetDataset(BaseDataset):
 
     def __len__(self):
         return len(self.images_list)
-
