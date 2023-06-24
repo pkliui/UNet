@@ -40,11 +40,9 @@ class TestUNetDateset(unittest.TestCase):
             sample_id = f"sample_id{i}"
             image_file = f"image{i}.png"
             mask_file = f"mask{i}.png"
-            sample_data.append({
-                "sample_id": sample_id,
-                "image_file": image_file,
-                "mask_file": mask_file
-            })
+            sample_data.append({"sample_id": sample_id,
+                                "image_file": image_file,
+                                "mask_file": mask_file})
 
             # make sample folder containing images and masks
             sample_folder = os.path.join(self.test_dir, sample_id)
@@ -193,9 +191,8 @@ class TestUNetDateset(unittest.TestCase):
         # make a dataloader from the dataset
         with self.assertRaises(ValueError):
             _ = BaseDataLoader(dataset=unet_data,
-                                         batch_size=batch_size,
-                                         validation_split=0.2,
-                                         test_split=0.1,
-                                         shuffle_for_split=True,
-                                         random_seed_split=0)
-
+                               batch_size=batch_size,
+                               validation_split=0.2,
+                               test_split=0.1,
+                               shuffle_for_split=True,
+                               random_seed_split=0)
