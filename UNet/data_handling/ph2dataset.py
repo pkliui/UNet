@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from typing import Optional, Callable, Tuple
+from typing import Tuple
 
 from UNet.data_handling.unetdataset import UNetDataset
 from UNet.data_handling import utils
@@ -28,6 +28,8 @@ class PH2Dataset(UNetDataset):
                 * sample1.bmp
             * sample2_lesion
                 * sample2_lesion.bmp
+    Note that only ONE image per folder is expected, e.g. one image in sample1_Dermoscopic_Image folder,
+    one mask in sample1_lesion folder
     """
 
     def __init__(self,
