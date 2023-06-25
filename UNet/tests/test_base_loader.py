@@ -71,6 +71,11 @@ class TestBaseDataLoader(unittest.TestCase):
             ├── ...
         """
         num_images = 10
+        image_size_linear = 572
+        mask_size_linear = 388
+        batch_size = 2
+        validation_split = 0.2
+        test_split = 0.2
 
         # Create dummy image and mask folders and files
         sample_data = []
@@ -108,16 +113,18 @@ class TestBaseDataLoader(unittest.TestCase):
             os.path.join(self.test_dir, sample["sampleID"], f"{sample['sampleID']}_mask", sample["mask_file"])
             for sample in sample_data
         ]
-        # read masks and images
+
+
+        # make unetdataset
         unet_data = UNetDataset(images_list=images_list,
                                 masks_list=masks_list,
-                                transform=None)
+                                resize_required=True,
+                                required_image_size=(image_size_linear, image_size_linear),
+                                required_mask_size=(mask_size_linear, mask_size_linear))
 
         #
         # set args for dataloader
-        batch_size = 2
-        validation_split = 0.2
-        test_split = 0.2
+
         # create the corresponding dataloader for training and validation
         self.bdl = BaseDataLoader(dataset=unet_data,
                                      batch_size=batch_size,
@@ -126,9 +133,9 @@ class TestBaseDataLoader(unittest.TestCase):
                                   shuffle_for_split=True,
                                   random_seed_split=0)
         # check the batch size
-        self.assertEqual(self.bdl.batch_size, 2)
+        self.assertEqual(self.bdl.batch_size, batch_size)
         # check the validation split
-        self.assertEqual(self.bdl.validation_split, 0.2)
+        self.assertEqual(self.bdl.validation_split, validation_split)
         # check the number of batches for validation
         self.assertEqual(len(self.bdl.val_loader), 1)
         self.assertEqual(len(self.bdl.test_loader), 1)
