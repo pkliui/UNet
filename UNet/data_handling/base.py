@@ -31,12 +31,11 @@ class BaseDataset(Dataset):
         """
         return NotImplementedError("GetItem not implemented")
 
-    def transform_data(self):
+    def resize_sample(self):
         """
-        Override this function to define any pre-processing you want to apply
-        to the inputs in the dataloading step.
+        Override this function to define any resizing of input data
         """
-        return NotImplementedError("Transform not implemented")
+        return NotImplementedError("resize_sample not implemented")
 
 
 class BaseDataLoader:
