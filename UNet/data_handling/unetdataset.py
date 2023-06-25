@@ -6,7 +6,7 @@ from pathlib import Path
 import torch.nn as nn
 import numpy as np
 
-from UNet.classes.base import BaseDataset
+from UNet.data_handling.base import BaseDataset
 from typing import List, Tuple
 
 from UNet.utils.resize_data import ResizeData
